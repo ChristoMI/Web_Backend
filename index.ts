@@ -1,7 +1,7 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
 import * as awsx from "@pulumi/awsx";
-import { testRouteHandler } from "./routes/testRoute";
+import { testRouteHandler } from "./src/routes/testRoute";
 
 const stackConfig = new pulumi.Config("site");
 const domain = stackConfig.require("domain");
@@ -23,6 +23,16 @@ const api = new awsx.apigateway.API("booking-api", {
         xrayTracingEnabled: true
     }
 })
+
+const db = new aws.dynamodb.Table("mytable", {
+    attributes: [
+        { name: "Id", type: "S" },
+    ],
+    hashKey: "Id",
+    readCapacity: 1,
+    writeCapacity: 1,
+});
+
 const domainName = new aws.apigateway.DomainName("booking-domain", {
     domainName: domain,
     certificateArn: certArn,

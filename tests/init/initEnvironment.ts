@@ -1,0 +1,2 @@
+require('./../configTestEnvironment')
+require('./createDynamoStructure')

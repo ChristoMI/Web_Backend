@@ -2,6 +2,17 @@ name: Pulumi
 on:
   - pull_request
 jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: NodeJS
+        uses: actions/setup-node@v1
+      - run: npm install
+      - run: docker-compose -d
+      - run: npm test
+        env:
+          CI: true
   preview:
     name: Preview
     runs-on: ubuntu-latest
