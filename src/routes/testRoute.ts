@@ -1,11 +1,10 @@
 import * as awsx from "@pulumi/awsx";
-import * as AWS from 'aws-sdk'
 import * as uuid from 'uuid'
-
-// Define our routes, independent from the API Gateway itself.
+import { createDynamo } from './../initAWS'
+ 
 export async function testRouteCreate(
     event: awsx.apigateway.Request): Promise<awsx.apigateway.Response> {
-    const dynamo = new AWS.DynamoDB()
+    const dynamo = createDynamo()
 
     const newId = uuid()
     return dynamo.putItem({
@@ -24,7 +23,7 @@ export async function testRouteCreate(
 // Define our routes, independent from the API Gateway itself.
 export async function testRouteGet(
     event: awsx.apigateway.Request): Promise<awsx.apigateway.Response> {
-    const dynamo = new AWS.DynamoDB()
+    const dynamo = createDynamo()
     
     let id = ""
     if(event.pathParameters) {
