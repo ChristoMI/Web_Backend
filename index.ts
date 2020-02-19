@@ -17,7 +17,7 @@ const api = new awsx.apigateway.API("booking-api", {
             { in: "path", name: "id" }
         ],
         eventHandler: new aws.lambda.CallbackFunction("testRouteGet", {
-            callback: testRouteGet,
+            callbackFactory: testRouteGet,
             reservedConcurrentExecutions: 1,
             tracingConfig: {
                 mode: 'Active'
@@ -28,7 +28,7 @@ const api = new awsx.apigateway.API("booking-api", {
         path: "/test",
         method: "POST",
         eventHandler: new aws.lambda.CallbackFunction("testRouteCreate", {
-            callback: testRouteCreate,
+            callbackFactory: testRouteCreate,
             reservedConcurrentExecutions: 1,
             tracingConfig: {
                 mode: 'Active'

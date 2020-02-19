@@ -1,51 +1,51 @@
 import * as awsx from "@pulumi/awsx";
 import * as uuid from 'uuid'
 import { createDynamo } from './../initAWS'
+import { CallbackFactory } from "@pulumi/aws/lambda";
  
-export async function testRouteCreate(
-    event: awsx.apigateway.Request): Promise<awsx.apigateway.Response> {
+export function testRouteCreate() {
     const dynamo = createDynamo()
 
-    const newId = uuid()
-    return dynamo.putItem({
-        TableName: 'test-stuff',
-        Item: { Id: { S: newId } }
-    })
-        .promise()
-        .then((r) => {
-            return {
-                statusCode: 200,
-                body: JSON.stringify({ id: newId }),
-            };
-        })
+    return async (event: awsx.apigateway.Request) => {
+        const newId = uuid()
+        
+        await dynamo.putItem({
+            TableName: 'test-stuff',
+            Item: { Id: { S: newId } }
+        }).promise()
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ id: newId }),
+        };
+    }
 }
 
 // Define our routes, independent from the API Gateway itself.
-export async function testRouteGet(
-    event: awsx.apigateway.Request): Promise<awsx.apigateway.Response> {
+export function testRouteGet() {
     const dynamo = createDynamo()
+
+    return async (event: awsx.apigateway.Request) => {
+        let id = ""
+        if(event.pathParameters) {
+            id = event.pathParameters["id"] || ''
+        }
     
-    let id = ""
-    if(event.pathParameters) {
-        id = event.pathParameters["id"] || ''
-    }
+        const response = await dynamo.getItem({
+            TableName: 'test-stuff',
+            Key: { "Id": { "S": id.toString() } }
+        }).promise()
 
-    return dynamo.getItem({
-        TableName: 'test-stuff',
-        Key: { "Id": { "S": id.toString() } }
-    })
-        .promise()
-        .then((r) => {
-            if (r.Item) {
-                return {
-                    statusCode: 200,
-                    body: JSON.stringify({ id: r.Item.Id.S }),
-                };
-            }
-
+        if (response.Item) {
             return {
-                statusCode: 404,
-                body: 'Not Found'
-            }
-        })
+                statusCode: 200,
+                body: JSON.stringify({ id: response.Item.Id.S }),
+            };
+        }
+
+        return {
+            statusCode: 404,
+            body: 'Not Found'
+        }
+    }
 }
