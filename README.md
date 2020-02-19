@@ -10,7 +10,9 @@ Each commit to master will trigger a deploy of the infrastructure via pulumi
 
 # To develop
 Test locally via integration tests
+
 Update AWS infrastructure in `index.ts`
+
 Add DynamoDb tables to `infrastructure\dynamodb.ts`
 
 # To test
