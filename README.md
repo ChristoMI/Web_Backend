@@ -8,6 +8,11 @@ PRs will additionally output the preview of pulumi changes as github comment
 
 Each commit to master will trigger a deploy of the infrastructure via pulumi
 
+# To develop
+Test locally via integration tests
+Update AWS infrastructure in `index.ts`
+Add DynamoDb tables to `infrastructure\dynamodb.ts`
+
 # To test
 - Run `docker-compose up` to launch local DynamoDB
 - Run `npm run initLocal` to create local DynamoDB tables
