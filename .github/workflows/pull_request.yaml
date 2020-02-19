@@ -19,4 +19,3 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           PULUMI_CI: pr
           COMMENT_ON_PR: 1
-          PULUMI_ROOT: infra
