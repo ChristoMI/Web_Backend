@@ -1,9 +1,23 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
 import * as awsx from "@pulumi/awsx";
+import {testRouteHandler} from "./routes/testRoute";
 
-// Create an AWS resource (S3 Bucket)
-const bucket = new aws.s3.Bucket("my-bucket");
+const stackConfig = new pulumi.Config("site");
+const domain = stackConfig.require("domain");
+const certArn = stackConfig.require("certificateArn");
 
-// Export the name of the bucket
-export const bucketName = bucket.id;
+const api = new awsx.apigateway.API("booking-api", {
+    routes: [{ path: "/test", method: "GET", eventHandler: testRouteHandler }]
+})
+const domainName = new aws.apigateway.DomainName("booking-domain", {
+    domainName: domain,
+    certificateArn: certArn,
+})
+const domainMapping = new aws.apigateway.BasePathMapping("booking-domain-mapping", {
+    restApi: api.restAPI,
+    domainName: domainName.domainName,
+    stageName: api.stage.stageName,
+});
+
+export const url = api.url
