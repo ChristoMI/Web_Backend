@@ -41,7 +41,7 @@ const template = () => ({
     resource: ''
 })
 
-export function apiGatewayWithBody(body: object, pathParams = {}) {
+export function createRequestFromBlueprint(body: object, pathParams = {}) {
     let instance = template()
     instance.body = JSON.stringify(body)
     instance.pathParameters = pathParams

@@ -8,7 +8,7 @@ process.env.PULUMI_NODEJS_STACK = 'my-ws';
 process.env.PULUMI_NODEJS_PROJECT = 'dev';
 process.env.PULUMI_CONFIG = '{ "aws:region": "us-west-2" }';
 
-import './../configTestEnvironment'
+import '../configTestEnvironment'
 import * as dynamoStructure from '../../infrastructure/dynamodb'
 import { Table } from '@pulumi/aws/dynamodb'
 import * as AWS from 'aws-sdk'
@@ -19,12 +19,9 @@ const promise = <T>(out: pulumi.Output<T>): Promise<pulumi.Unwrap<T>> => {
     return anyOut.promise()
 }
 
-let total = 0
-let actual = 0
 const tables = Object.values(dynamoStructure).filter(c => c instanceof Table).map(c => <Table>c)
 const dynamodb = new AWS.DynamoDB();
 for (const table of tables) {
-    total += 1
     Promise.all([promise(table.hashKey), promise(table.rangeKey), promise(table.name), promise(table.attributes)])
         .then((a) => {
             const [hashKey, rangeKey, name, attributes] = a 
@@ -53,6 +50,5 @@ for (const table of tables) {
                     WriteCapacityUnits: 1
                 }
             }, (err, data) => {if(err) console.error(err); else console.log('Created: ', data)})
-            actual += 1
         })
 }

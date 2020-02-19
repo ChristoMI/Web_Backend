@@ -2,7 +2,7 @@
     "name": "booking_api",
     "scripts": {
         "test": "mocha -r ts-node/register tests/**/test.ts",
-        "initLocal": "ts-node tests/init/initEnvironment.ts"
+        "initLocal": "ts-node tests/setup/initEnvironment.ts"
     },
     "devDependencies": {
         "@types/chai": "^4.2.9",
