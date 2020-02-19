@@ -13,6 +13,7 @@ jobs:
         uses: actions/setup-node@v1
       - run: npm install
       - run: docker-compose up -d
+      - run: npm run initLocal
       - run: npm test
         env:
           CI: true
