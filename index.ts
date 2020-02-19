@@ -11,16 +11,20 @@ const certArn = stackConfig.require("certificateArn");
 
 const api = new awsx.apigateway.API("booking-api", {
     routes: [{
-        path: "/test",
+        path: "/test/{id}",
         method: "GET",
+        requiredParameters: [
+            { in: "path", name: "id" }
+        ],
         eventHandler: new aws.lambda.CallbackFunction("testRouteGet", {
             callback: testRouteGet,
             reservedConcurrentExecutions: 1,
             tracingConfig: {
                 mode: 'Active'
             }
-        })},
-        {
+        })
+    },
+    {
         path: "/test",
         method: "POST",
         eventHandler: new aws.lambda.CallbackFunction("testRouteCreate", {
