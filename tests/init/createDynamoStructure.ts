@@ -8,17 +8,11 @@ process.env.PULUMI_NODEJS_STACK = 'my-ws';
 process.env.PULUMI_NODEJS_PROJECT = 'dev';
 process.env.PULUMI_CONFIG = '{ "aws:region": "us-west-2" }';
 
+import './../configTestEnvironment'
 import * as dynamoStructure from '../../infrastructure/dynamodb'
 import { Table } from '@pulumi/aws/dynamodb'
 import * as AWS from 'aws-sdk'
 import * as pulumi from "@pulumi/pulumi";
-
-AWS.config.update({
-    region: "us-west-2",
-    dynamodb: {
-        endpoint: "http://localhost:8000"
-    }
-});
 
 const promise = <T>(out: pulumi.Output<T>): Promise<pulumi.Unwrap<T>> => {
     let anyOut: any = out
