@@ -13,9 +13,15 @@ const api = new awsx.apigateway.API("booking-api", {
         method: "GET", 
         eventHandler: new aws.lambda.CallbackFunction("testRouteHandler", {
             callback: testRouteHandler,
-            reservedConcurrentExecutions: 1
+            reservedConcurrentExecutions: 1,
+            tracingConfig: {
+                mode: 'Active'
+            }
         })
     }],
+    stageArgs: {
+        xrayTracingEnabled: true
+    }
 })
 const domainName = new aws.apigateway.DomainName("booking-domain", {
     domainName: domain,
