@@ -25,11 +25,15 @@ export async function testRouteCreate(
 export async function testRouteGet(
     event: awsx.apigateway.Request): Promise<awsx.apigateway.Response> {
     const dynamo = new AWS.DynamoDB()
+    
+    let id = ""
+    if(event.pathParameters) {
+        id = event.pathParameters["id"] || ''
+    }
 
-    const body = JSON.parse(event.body || '')
     return dynamo.getItem({
         TableName: 'test-stuff',
-        Key: { "Id": { "S": body.id.toString() } }
+        Key: { "Id": { "S": id.toString() } }
     })
         .promise()
         .then((r) => {
