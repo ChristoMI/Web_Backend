@@ -1,7 +1,7 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
 import * as awsx from "@pulumi/awsx";
-import { testRouteHandler } from "./src/routes/testRoute";
+import { testRouteGet, testRouteCreate } from "./src/routes/testRoute";
 
 const stackConfig = new pulumi.Config("site");
 const domain = stackConfig.require("domain");
@@ -9,10 +9,21 @@ const certArn = stackConfig.require("certificateArn");
 
 const api = new awsx.apigateway.API("booking-api", {
     routes: [{
-        path: "/test", 
-        method: "GET", 
+        path: "/test",
+        method: "GET",
         eventHandler: new aws.lambda.CallbackFunction("testRouteHandler", {
-            callback: testRouteHandler,
+            callback: testRouteGet,
+            reservedConcurrentExecutions: 1,
+            tracingConfig: {
+                mode: 'Active'
+            }
+        })
+    },
+    {
+        path: "/test",
+        method: "POST",
+        eventHandler: new aws.lambda.CallbackFunction("testRouteHandler", {
+            callback: testRouteCreate,
             reservedConcurrentExecutions: 1,
             tracingConfig: {
                 mode: 'Active'
