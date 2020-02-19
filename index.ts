@@ -3,6 +3,8 @@ import * as aws from "@pulumi/aws";
 import * as awsx from "@pulumi/awsx";
 import { testRouteGet, testRouteCreate } from "./src/routes/testRoute";
 
+import './infrastructure/dynamodb'
+
 const stackConfig = new pulumi.Config("site");
 const domain = stackConfig.require("domain");
 const certArn = stackConfig.require("certificateArn");
@@ -11,18 +13,17 @@ const api = new awsx.apigateway.API("booking-api", {
     routes: [{
         path: "/test",
         method: "GET",
-        eventHandler: new aws.lambda.CallbackFunction("testRouteHandler", {
+        eventHandler: new aws.lambda.CallbackFunction("testRouteGet", {
             callback: testRouteGet,
             reservedConcurrentExecutions: 1,
             tracingConfig: {
                 mode: 'Active'
             }
-        })
-    },
-    {
+        })},
+        {
         path: "/test",
         method: "POST",
-        eventHandler: new aws.lambda.CallbackFunction("testRouteHandler", {
+        eventHandler: new aws.lambda.CallbackFunction("testRouteCreate", {
             callback: testRouteCreate,
             reservedConcurrentExecutions: 1,
             tracingConfig: {
@@ -34,15 +35,6 @@ const api = new awsx.apigateway.API("booking-api", {
         xrayTracingEnabled: true
     }
 })
-
-const db = new aws.dynamodb.Table("mytable", {
-    attributes: [
-        { name: "Id", type: "S" },
-    ],
-    hashKey: "Id",
-    readCapacity: 1,
-    writeCapacity: 1,
-});
 
 const domainName = new aws.apigateway.DomainName("booking-domain", {
     domainName: domain,
