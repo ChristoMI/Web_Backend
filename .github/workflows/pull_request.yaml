@@ -9,7 +9,7 @@ jobs:
       - name: NodeJS
         uses: actions/setup-node@v1
       - run: npm install
-      - run: docker-compose -d
+      - run: docker-compose up -d
       - run: npm test
         env:
           CI: true
