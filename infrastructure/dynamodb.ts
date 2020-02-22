@@ -7,7 +7,10 @@ const dynamo = new aws.dynamodb.Table('test-stuff', {
     readCapacity: 1,
     writeCapacity: 1,
     name: 'test-stuff',
-    hashKey: 'Id'
+    hashKey: 'Id',
+    globalSecondaryIndexes: [
+        {hashKey: 'Id', name: 'test-global-secondary', readCapacity: 1, writeCapacity: 1, projectionType: 'ALL'}
+    ]
 })
 
 export const testStuff = dynamo

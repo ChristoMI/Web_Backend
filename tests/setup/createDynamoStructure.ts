@@ -19,19 +19,52 @@ const promise = <T>(out: pulumi.Output<T>): Promise<pulumi.Unwrap<T>> => {
     return anyOut.promise()
 }
 
+function toKeySchema(hashKey: string | undefined, rangeKey: string | undefined) {
+    const keys = []
+    if(hashKey) {
+        keys.push({AttributeName: hashKey, KeyType: "HASH"})
+    }
+    if(rangeKey) {
+        keys.push({AttributeName: rangeKey, KeyType: "RANGE"})
+    }
+
+    return keys
+}
+
 const tables = Object.values(dynamoStructure).filter(c => c instanceof Table).map(c => <Table>c)
 const dynamodb = new AWS.DynamoDB();
 for (const table of tables) {
-    Promise.all([promise(table.hashKey), promise(table.rangeKey), promise(table.name), promise(table.attributes)])
+    Promise.all(
+        [promise(table.hashKey), promise(table.rangeKey), promise(table.name),
+        promise(table.attributes), promise(table.globalSecondaryIndexes), promise(table.localSecondaryIndexes)]
+    )
         .then((a) => {
-            const [hashKey, rangeKey, name, attributes] = a 
-            const keys = []
-            if(hashKey) {
-                keys.push({AttributeName: hashKey, KeyType: "HASH"})
+            const [hashKey, rangeKey, name, attributes, globalSecondaryIndexes, localSecondaryIndexes] = a
+            const keys = toKeySchema(hashKey, rangeKey);
+
+            const gsi: AWS.DynamoDB.GlobalSecondaryIndexList = [];
+            if (globalSecondaryIndexes) {
+                for (let i of globalSecondaryIndexes) {
+                    gsi.push({
+                        IndexName: i.name,
+                        KeySchema: toKeySchema(i.hashKey, i.rangeKey),
+                        ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 },
+                        Projection: { ProjectionType: i.projectionType, NonKeyAttributes: i.nonKeyAttributes }
+                    })
+                }
             }
-            if(rangeKey) {
-                keys.push({AttributeName: rangeKey, KeyType: "RANGE"})
+
+            const lsi: AWS.DynamoDB.LocalSecondaryIndexList = [];
+            if (localSecondaryIndexes) {
+                for (let i of localSecondaryIndexes) {
+                    lsi.push({ 
+                        IndexName: i.name, 
+                        KeySchema: toKeySchema(hashKey, i.rangeKey),
+                        Projection: { ProjectionType: i.projectionType, NonKeyAttributes: i.nonKeyAttributes }
+                    })
+                }
             }
+
 
             let dynamoAttributes: AWS.DynamoDB.AttributeDefinitions = []
             if(attributes) {
@@ -48,7 +81,9 @@ for (const table of tables) {
                 ProvisionedThroughput: {
                     ReadCapacityUnits: 1,
                     WriteCapacityUnits: 1
-                }
+                },
+                GlobalSecondaryIndexes: gsi.length ? gsi : undefined,
+                LocalSecondaryIndexes: lsi.length ? lsi : undefined
             }, (err, data) => {if(err) console.error(err); else console.log('Created: ', data)})
         })
 }
