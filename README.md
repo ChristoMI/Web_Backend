@@ -9,6 +9,9 @@ PRs will additionally output the preview of pulumi changes as github comment
 Each commit to master will trigger a deploy of the infrastructure via pulumi
 
 # To develop
+
+To use aliases, you must add this line in the very main file of your application, before any code: `import 'module-alias/register'; // for alias`
+
 Test locally via integration tests
 
 Update AWS infrastructure in `index.ts`
