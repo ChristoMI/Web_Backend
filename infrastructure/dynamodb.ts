@@ -8,6 +8,15 @@ const dynamo = new aws.dynamodb.Table('test-stuff', {
     writeCapacity: 1,
     name: 'test-stuff',
     hashKey: 'Id'
+});
+
+const properties = new aws.dynamodb.Table('properties', {
+    attributes: [
+        { name: 'id', type: 'S'}
+    ],
+    name: 'properties',
+    hashKey: 'id'
 })
 
-export const testStuff = dynamo
+export const testStuff = dynamo;
+export const propertiesTable = properties;
