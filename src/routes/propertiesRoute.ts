@@ -22,7 +22,7 @@ export function propertyInsert() {
     
             return {
                 statusCode: 200,
-                body: JSON.stringify(response.Attributes),
+                body: JSON.stringify(response.$response.data),
             };
 
         } catch(e){
