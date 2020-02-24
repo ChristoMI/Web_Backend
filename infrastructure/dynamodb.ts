@@ -11,7 +11,7 @@ const dynamo = new aws.dynamodb.Table('test-stuff', {
     globalSecondaryIndexes: [
         {hashKey: 'Id', name: 'test-global-secondary', readCapacity: 1, writeCapacity: 1, projectionType: 'ALL'}
     ]
-});
+})
 
 const properties = new aws.dynamodb.Table('properties', {
     attributes: [
