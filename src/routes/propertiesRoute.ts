@@ -11,18 +11,18 @@ export function propertyInsert() {
             const body = JSON.parse(event.body || '{}')
     
             const response = await dynamo.putItem({
-                    TableName: 'properties',
-                    Item: { 
-                        id: { S: newId },
-                        name: {S: body.name || ''},
-                        description : {S: body.description || ''},
-                        cover_image : {S: body.cover_image || ''}
-                    }
+                TableName: 'properties',
+                Item: { 
+                    id: { S: newId },
+                    name: {S: body.name || ''},
+                    description : {S: body.description || ''},
+                    created_date: {S: new Date().toISOString()}
+                }
             }).promise();
     
             return {
                 statusCode: 200,
-                body: JSON.stringify(response),
+                body: JSON.stringify(response.Attributes),
             };
 
         } catch(e){
@@ -52,28 +52,29 @@ export function propertyUpdate() {
                     statusCode: 404,
                     body: 'Item not found'
                 };
-            } else {
-                const response = await dynamo.putItem({
-                    TableName: 'properties',
-                    Item: { 
-                        id: { S: id },
-                        name: {S: body.name || search.Item.name},
-                        description : {S: body.description || search.Item.description},
-                        cover_image : {S: body.cover_image || search.Item.cover_image}
-                    }
-                }).promise();
+            };
 
-                return {
-                    statusCode: 200,
-                    body: JSON.stringify(response),
-                };
-            }
+            const response = await dynamo.putItem({
+                TableName: 'properties',
+                Item: { 
+                    id: { S: id },
+                    name: {S: body.name || search.Item.name},
+                    description : {S: body.description || search.Item.description},
+                    cover_image : {S: body.cover_image || search.Item.cover_image}
+                }
+            }).promise();
+
+            return {
+                statusCode: 200,
+                body: JSON.stringify(response.Attributes),
+            };
+            
 
         } catch(e){
             return {
                 statusCode: 500,
                 body: JSON.stringify(e)
-            }
+            };
         }
     }
 }
@@ -84,6 +85,13 @@ export function propertyGetById() {
     return async (event: awsx.apigateway.Request) => {
         try{
             const id = event.pathParameters ? event.pathParameters.id : '';
+
+            if (!id) {
+                return {
+                    statusCode: 400,
+                    body: 'Empty id'
+                };
+            }; 
             
             const response = await dynamo.getItem({
                 TableName: 'properties',
@@ -96,13 +104,13 @@ export function propertyGetById() {
             } : {
                 statusCode: 404,
                 body: 'Not Found'
-            }          
+            };          
     
         } catch(e){
             return {
                 statusCode: 500,
                 body: JSON.stringify(e)
-            }
+            };
         }
     }
 }
@@ -112,20 +120,22 @@ export function propertiesGet() {
 
     return async (event: awsx.apigateway.Request) => {
         try{
-            const response = await dynamo.scan().promise();
+            const response = await dynamo.scan({
+                TableName: 'properties'
+            }).promise();
 
             return response ? {
                 statusCode: 200,
-                body: JSON.stringify(response),
+                body: JSON.stringify(response.Items),
             } : {
                 statusCode: 404,
                 body: 'Not Found'
-            }     
+            }; 
         } catch(e){
             return {
                 statusCode: 500,
                 body: JSON.stringify(e)
-            }
+            };
         }
     }
 }

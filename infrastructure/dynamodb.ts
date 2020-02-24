@@ -14,6 +14,8 @@ const properties = new aws.dynamodb.Table('properties', {
     attributes: [
         { name: 'id', type: 'S'}
     ],
+    readCapacity: 1,
+    writeCapacity: 1,
     name: 'properties',
     hashKey: 'id'
 })
