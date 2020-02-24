@@ -1,6 +1,7 @@
 import * as awsx from "@pulumi/awsx";
 import * as uuid from 'uuid'
-import { createDynamo } from './../initAWS'
+import { createDynamo } from './../initAWS';
+import AWS = require("aws-sdk");
  
 export function propertyInsert() {
     const dynamo = createDynamo()
@@ -8,7 +9,8 @@ export function propertyInsert() {
     return async (event: awsx.apigateway.Request) => {
         try{
             const newId = uuid();
-            const body = JSON.parse(event.body || '{}')
+            const body = JSON.parse(event.body || '{}');
+            const date = new Date().toISOString();
     
             const response = await dynamo.putItem({
                 TableName: 'properties',
@@ -16,13 +18,18 @@ export function propertyInsert() {
                     id: { S: newId },
                     name: {S: body.name || ''},
                     description : {S: body.description || ''},
-                    created_date: {S: new Date().toISOString()}
+                    created_date: {S: date}
                 }
             }).promise();
     
             return {
                 statusCode: 200,
-                body: JSON.stringify(response.$response.data),
+                body: JSON.stringify({
+                    id: newId ,
+                    name:body.name || '',
+                    description: body.description || '',
+                    created_date: date
+                }),
             };
 
         } catch(e){
@@ -58,15 +65,19 @@ export function propertyUpdate() {
                 TableName: 'properties',
                 Item: { 
                     id: { S: id },
-                    name: {S: body.name || search.Item.name},
-                    description : {S: body.description || search.Item.description},
-                    cover_image : {S: body.cover_image || search.Item.cover_image}
+                    name: {S: body.name || search.Item.name.S},
+                    description : {S: body.description || search.Item.description.S}
                 }
             }).promise();
 
             return {
                 statusCode: 200,
-                body: JSON.stringify(response.Attributes),
+                body: JSON.stringify({
+                    id: id,
+                    name: body.name || search.Item.name.S,
+                    description: body.description || search.Item.description.S,
+                    created_date: search.Item.created_date.S
+                }),
             };
             
 
@@ -85,13 +96,6 @@ export function propertyGetById() {
     return async (event: awsx.apigateway.Request) => {
         try{
             const id = event.pathParameters ? event.pathParameters.id : '';
-
-            if (!id) {
-                return {
-                    statusCode: 400,
-                    body: 'Empty id'
-                };
-            }; 
             
             const response = await dynamo.getItem({
                 TableName: 'properties',
@@ -100,7 +104,7 @@ export function propertyGetById() {
     
             return response.Item ? {
                 statusCode: 200,
-                body: JSON.stringify(response.Item),
+                body: JSON.stringify(AWS.DynamoDB.Converter.unmarshall(response.Item)),
             } : {
                 statusCode: 404,
                 body: 'Not Found'
@@ -124,9 +128,11 @@ export function propertiesGet() {
                 TableName: 'properties'
             }).promise();
 
-            return response ? {
+            const collection = response.Items ? response.Items.map((element: any) => AWS.DynamoDB.Converter.unmarshall(element)) : [];
+
+            return collection.length ? {
                 statusCode: 200,
-                body: JSON.stringify(response.Items),
+                body: JSON.stringify(collection),
             } : {
                 statusCode: 404,
                 body: 'Not Found'
