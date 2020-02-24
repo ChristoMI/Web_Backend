@@ -130,13 +130,11 @@ export function propertiesGet() {
 
             const collection = response.Items ? response.Items.map((element: any) => AWS.DynamoDB.Converter.unmarshall(element)) : [];
 
-            return collection.length ? {
+            return {
                 statusCode: 200,
                 body: JSON.stringify(collection),
-            } : {
-                statusCode: 404,
-                body: 'Not Found'
-            }; 
+            };
+            
         } catch(e){
             return {
                 statusCode: 500,
