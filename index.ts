@@ -128,6 +128,8 @@ function addCors(routes: Route[]) {
     }
 }
 
+addCors(routes)
+
 const api = new awsx.apigateway.API("booking-api", {
     routes: routes,
     stageArgs: {
