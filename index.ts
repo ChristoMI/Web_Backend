@@ -115,4 +115,136 @@ const domainMapping = new aws.apigateway.BasePathMapping("booking-domain-mapping
     stageName: api.stage.stageName,
 });
 
+const userPool = new aws.cognito.UserPool("userPool", {
+    autoVerifiedAttributes: ["email"],
+});
+
+const userPoolClient = new aws.cognito.UserPoolClient("userPoolClient", {
+    allowedOauthFlows: ["code"],
+    allowedOauthFlowsUserPoolClient: true,
+    allowedOauthScopes: ["phone", "email", "openid", "profile", "aws.cognito.signin.user.admin"],
+    // callbackUrls: ["http://localhost:3000", "https://myapp.com"],
+    // defaultRedirectUri: "https://myapp.com",
+    generateSecret: false,
+    // logoutUrls: ["http://localhost:3000", "https://myapp.com"],
+    supportedIdentityProviders: ["COGNITO"],
+    userPoolId: userPool.id,
+});
+
+const userPoolDomain = new aws.cognito.UserPoolDomain("userPoolDomain", {
+    domain: "mybff",
+    userPoolId: userPool.id,
+});
+
+
+const cognitoIdentityProvider = new aws.cognito.IdentityProvider(userPool.endpoint.toString(), {
+    providerDetails: { "client_id": "123" },
+    userPoolId: userPool.id,
+    providerType: "Cognito",
+    providerName: "identityProvider",
+  });
+
+const identityPool = new aws.cognito.IdentityPool("identityPool", {
+    allowUnauthenticatedIdentities: true,
+    cognitoIdentityProviders: [cognitoIdentityProvider],
+    identityPoolName: "identityPool",
+});
+
+const identityPoolAuthenticatedRole = new aws.iam.Role("identityPoolAuthenticatedRole", {
+    assumeRolePolicy: identityPool.id.apply(id => JSON.stringify({
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {
+                    "Federated": "cognito-identity.amazonaws.com"
+                },
+                "Action": "sts:AssumeRoleWithWebIdentity",
+                "Condition": {
+                    "StringEquals": {
+                        "cognito-identity.amazonaws.com:aud": id
+                    },
+                    "ForAnyValue:StringLike": {
+                        "cognito-identity.amazonaws.com:amr": "authenticated"
+                    }
+                }
+            }
+        ]
+    })),
+});
+
+const identityPoolAuthenticatedRolePolicy = new aws.iam.RolePolicy("identityPoolAuthenticatedRolePolicy", {
+    policy: JSON.stringify({
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "mobileanalytics:PutEvents",
+                    "cognito-sync:*",
+                    "cognito-identity:*"
+                ],
+                "Resource": [
+                    "*"
+                ]
+            }
+        ]
+    }),
+    role: identityPoolAuthenticatedRole.id,
+});
+
+const identityPoolUnauthenticatedRole = new aws.iam.Role("identityPoolUnauthenticatedRole", {
+    assumeRolePolicy: identityPool.id.apply(id => JSON.stringify({
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {
+                    "Federated": "cognito-identity.amazonaws.com"
+                },
+                "Action": "sts:AssumeRoleWithWebIdentity",
+                "Condition": {
+                    "StringEquals": {
+                        "cognito-identity.amazonaws.com:aud": id
+                    },
+                    "ForAnyValue:StringLike": {
+                        "cognito-identity.amazonaws.com:amr": "unauthenticated"
+                    }
+                }
+            }
+        ]
+    })),
+});
+
+const identityPoolUnauthenticatedRolePolicy = new aws.iam.RolePolicy("identityPoolUnauthenticatedRolePolicy", {
+    policy: JSON.stringify({
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "mobileanalytics:PutEvents",
+                    "cognito-sync:*",
+                ],
+                "Resource": [
+                    "*"
+                ]
+            }
+        ]
+    }),
+    role: identityPoolUnauthenticatedRole.id,
+});
+
+const identityPoolRoleAttachment = new aws.cognito.IdentityPoolRoleAttachment("identityPoolRoleAttachment", {
+    identityPoolId: identityPool.id,
+    roles: {
+        authenticated: identityPoolAuthenticatedRole.arn,
+        unauthenticated: identityPoolUnauthenticatedRole.arn,
+    },
+});
+
+export const userPoolId = userPool.id;
+export const userPoolName = userPool.name;
+export const userPoolClientId = userPoolClient.id;
+export const identityPoolId = identityPool.id;
 export const url = api.url
