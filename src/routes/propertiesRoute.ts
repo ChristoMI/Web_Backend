@@ -2,8 +2,8 @@ import * as awsx from "@pulumi/awsx";
 import * as uuid from 'uuid'
 import { createDynamo, createS3 } from './../initAWS';
 import {PropertyImageService, imageUrlFormatter} from './../propertyImageService'
-import AWS = require("aws-sdk");
 import { DynamoDB } from "aws-sdk";
+import {corsHeaders} from './corsHeaders'
 
 export const STATIC_BUCKET_ENV_KEY = 'staticbucket'
 export const STATIC_DOMAIN_ENV_KEY = 'staticdomain'
@@ -18,6 +18,18 @@ function toResponse(dynamodbEntry: DynamoDB.AttributeMap, toUrl: (key: string) =
             ? toUrl(dynamodbEntry.cover_image_key.S) 
             : undefined
     }
+}
+
+function buildApiResponse(statusCode: number, body: {[key: string]: any}): awsx.apigateway.Response {
+    return {
+        headers: corsHeaders,
+        body: JSON.stringify(body),
+        statusCode: statusCode
+    }
+}
+
+function buildNotFound() {
+    return buildApiResponse(404, {message: 'Not Found'})
 }
 
 export function propertyInsert() {
@@ -59,23 +71,17 @@ export function propertyInsert() {
                 Item: dynamodbItem
             }).promise();
     
-            return {
-                statusCode: 200,
-                body: JSON.stringify({
-                    id: newId ,
-                    name:body.name || '',
-                    description: body.description || '',
-                    created_date: date,
-                    cover_image_url: imageKey ? imageUrlFormatter(imageKey, staticDomain) : undefined
-                }),
-            };
+            return buildApiResponse(200, {
+                id: newId ,
+                name:body.name || '',
+                description: body.description || '',
+                created_date: date,
+                cover_image_url: imageKey ? imageUrlFormatter(imageKey, staticDomain) : undefined
+            })
 
         } catch(e){
             console.error(e)
-            return {
-                statusCode: 500,
-                body: JSON.stringify(e)
-            }
+            return buildApiResponse(500, e)
         }
     }
 }
@@ -103,10 +109,7 @@ export function propertyUpdate() {
             }).promise();
 
             if (!search.Item) {
-                return {
-                    statusCode: 404,
-                    body: 'Item not found'
-                };
+                return buildNotFound()
             };
 
             let imageKey: string | undefined =  (search.Item.cover_image_key && search.Item.cover_image_key.S) || undefined
@@ -130,24 +133,17 @@ export function propertyUpdate() {
                 Item: dynamodbItem
             }).promise();
 
-            return {
-                statusCode: 200,
-                body: JSON.stringify({
-                    id: id,
-                    name: body.name || search.Item.name.S,
-                    description: body.description || search.Item.description.S,
-                    created_date: search.Item.created_date.S,
-                    cover_image_url: imageKey ? imageUrlFormatter(imageKey, staticDomain) : undefined
-                }),
-            };
-            
+            return buildApiResponse(200, {
+                id: id,
+                name: body.name || search.Item.name.S,
+                description: body.description || search.Item.description.S,
+                created_date: search.Item.created_date.S,
+                cover_image_url: imageKey ? imageUrlFormatter(imageKey, staticDomain) : undefined
+            })
 
         } catch(e){
             console.error(e)
-            return {
-                statusCode: 500,
-                body: JSON.stringify(e)
-            };
+            return buildApiResponse(500, e)
         }
     }
 }
@@ -169,20 +165,13 @@ export function propertyGetById() {
                 Key: { "id": { "S": id.toString() } }
             }).promise();
     
-            return response.Item ? {
-                statusCode: 200,
-                body: JSON.stringify(toResponse(response.Item, (key) => imageUrlFormatter(key, staticDomain))),
-            } : {
-                statusCode: 404,
-                body: 'Not Found'
-            };          
+            return response.Item 
+            ? buildApiResponse(200, toResponse(response.Item, (key) => imageUrlFormatter(key, staticDomain))) 
+            : buildNotFound();          
     
         } catch(e){
             console.error(e)
-            return {
-                statusCode: 500,
-                body: JSON.stringify(e)
-            };
+            return buildApiResponse(500, e)
         }
     }
 }
@@ -203,17 +192,10 @@ export function propertiesGet() {
 
             const collection = response.Items ? response.Items.map((element) => toResponse(element, (key) => imageUrlFormatter(key, staticDomain))) : [];
 
-            return {
-                statusCode: 200,
-                body: JSON.stringify(collection),
-            };
-            
+            return buildApiResponse(200, collection)
         } catch(e){
             console.error(e)
-            return {
-                statusCode: 500,
-                body: JSON.stringify(e)
-            };
+            return buildApiResponse(500, e)
         }
     }
 }
