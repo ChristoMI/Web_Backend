@@ -19,7 +19,8 @@ export class PropertyImageService {
         await this.s3.putObject({
             Bucket: this.bucketName,
             Key: key,
-            Body: imageContent
+            Body: imageContent,
+            ACL: 'public-read'
         }).promise()
 
         return key
