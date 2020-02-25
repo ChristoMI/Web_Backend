@@ -14,7 +14,7 @@ function toResponse(dynamodbEntry: DynamoDB.AttributeMap, toUrl: (key: string) =
         name: dynamodbEntry.name.S,
         description: dynamodbEntry.description.S,
         created_date: dynamodbEntry.created_date.S,
-        cover_image_url: dynamodbEntry.cover_image_key && dynamodbEntry.cover_image_key.S 
+        cover_image_url: (dynamodbEntry.cover_image_key && dynamodbEntry.cover_image_key.S)
             ? toUrl(dynamodbEntry.cover_image_key.S) 
             : undefined
     }
@@ -74,7 +74,7 @@ export function propertyInsert() {
             }
 
             if(imageKey) {
-                dynamodbItem.cover_image_url = { S: imageKey}
+                dynamodbItem.cover_image_key = { S: imageKey}
             }
 
             const response = await dynamo.putItem({
@@ -136,7 +136,7 @@ export function propertyUpdate() {
             }
 
             if(imageKey) {
-                dynamodbItem.cover_image_url = { S: imageKey}
+                dynamodbItem.cover_image_key = { S: imageKey}
             }
 
             const response = await dynamo.putItem({
