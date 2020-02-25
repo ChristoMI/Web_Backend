@@ -11,7 +11,7 @@ const bucketName = "booking-static-content"
 const bucket = new aws.s3.Bucket(bucketName, {
     acl: "public-read",
     corsRules: [
-        {allowedMethods: ["GET", "OPTIONS"], allowedOrigins: ["*"], allowedHeaders: ["*"]}
+        {allowedMethods: ["GET"], allowedOrigins: ["*"], allowedHeaders: ["*"]}
     ]
 });
 
