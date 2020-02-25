@@ -5,7 +5,7 @@ import { propertyInsert, propertyUpdate, propertyGetById, propertiesGet, STATIC_
 
 describe('propertiesRoute route', () => {
     before(() => {
-        process.env[STATIC_BUCKET_ENV_KEY] = 'booking-static-content'
+        process.env[STATIC_BUCKET_ENV_KEY] = 'testbucket'
         process.env[STATIC_DOMAIN_ENV_KEY] = 'someweirdsite.weirddomain.weird'
     })
 
@@ -29,7 +29,20 @@ describe('propertiesRoute route', () => {
         expect(JSON.parse(result.body).created_date).to.not.be.empty;
         expect(JSON.parse(result.body).cover_image_url).to.not.be.empty;
         expect(JSON.parse(result.body).cover_image_url).to.contain(filename);
+        expect(JSON.parse(result.body).cover_image_url).to.satisfy((s: string) => s.startsWith('https://'), result.body);
     });
+
+    it('can get cover image after upload', async () => {
+      const body = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+      const filename = 'image.png'
+      const result = await propertyInsert()( createRequestFromBlueprint({name: 'LOL', description: 'KEK', cover_image_base64: body, cover_image_file_name: filename }))
+      const id = JSON.parse(result.body).id
+      const getResult = await propertyGetById()( createRequestFromBlueprint({}, {id: id}))
+      expect(getResult.statusCode).to.equal(200);
+      expect(JSON.parse(getResult.body).cover_image_url).to.not.be.empty;
+      expect(JSON.parse(getResult.body).cover_image_url).to.contain(filename);
+      expect(JSON.parse(getResult.body).cover_image_url).to.satisfy((s: string) => s.startsWith('https://'));
+  });
 
     it('should return new property on get after create', async () => {
       const result = await propertyInsert()( createRequestFromBlueprint({name: '0_o', description: '(ノò_ó)ノ︵┻━┻'}))

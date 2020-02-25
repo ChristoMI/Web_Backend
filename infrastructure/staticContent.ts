@@ -11,8 +11,11 @@ const bucketName = "booking-static-content"
 const bucket = new aws.s3.Bucket(bucketName, {
     acl: "public-read",
     corsRules: [
-        {allowedMethods: ["GET", "OPTIONS"], allowedOrigins: ["*"], allowedHeaders: ["*"]}
-    ]
+        {allowedMethods: ["GET"], allowedOrigins: ["*"], allowedHeaders: ["*"]}
+    ],
+    website: {
+        indexDocument: "index.html"
+    }
 });
 
 const hour = 60 * 60;
@@ -74,4 +77,4 @@ const cloudfrontDistribution = new aws.cloudfront.Distribution("booking-static",
 
 export const cfDomain = cloudfrontDistribution.domainName
 export const staticDomain = domain
-export const staticBucket = bucketName
+export const staticBucket = bucket.id
