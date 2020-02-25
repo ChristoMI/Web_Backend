@@ -4,6 +4,7 @@ import * as pulumi from '@pulumi/pulumi';
 import * as aws from '@pulumi/aws';
 import * as awsx from '@pulumi/awsx';
 import { testRouteGet, testRouteCreate } from './src/routes/testRoute';
+
 import {
   propertyInsert, propertyUpdate, propertyGetById, propertiesGet, STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY,
 } from './src/routes/propertiesRoute';
@@ -12,6 +13,7 @@ import * as commentsRoutes from '$src/routes/comments';
 import './infrastructure/dynamodb';
 import { staticBucket, staticDomain } from './infrastructure/staticContent';
 import { Route } from '@pulumi/awsx/apigateway/api';
+
 
 const stackConfig = new pulumi.Config('site');
 const domain = stackConfig.require('domain');
@@ -180,6 +182,7 @@ const domainName = new aws.apigateway.DomainName('booking-domain', {
   domainName: domain,
   certificateArn: certArn,
 });
+
 const domainMapping = new aws.apigateway.BasePathMapping('booking-domain-mapping', {
   restApi: api.restAPI,
   domainName: domainName.domainName,

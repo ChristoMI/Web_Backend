@@ -1,6 +1,5 @@
 /* eslint-disable no-undef */
 
-
 import 'module-alias/register'; // for alias
 
 import { expect } from 'chai';
