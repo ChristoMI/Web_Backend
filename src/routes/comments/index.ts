@@ -4,12 +4,12 @@ import * as awsx from '@pulumi/awsx';
 import { v4 as uuidv4 } from 'uuid';
 import { DynamoDB } from 'aws-sdk';
 import axios from 'axios';
-import { marshall, unmarshalls, response } from '$src/utils';
+import { marshall, unmarshalls, parseBody, buildApiResponse } from '$src/apiGatewayUtilities';
 import { createDynamo } from '$src/initAWS';
 
-import { getMoodType } from './utils';
+import { getMoodType } from './moodTypeConversion';
 
-export async function query(
+async function query(
   dynamo: any,
   params: DynamoDB.Types.QueryInput,
   items: Array<Object> = [],
@@ -53,12 +53,12 @@ export function getCommentsByPropertyId() {
       const comments = await query(dynamo, params)
         .then(sortByDate('createdDate'));
 
-      return response(200, {
+      return buildApiResponse(200, {
         items: comments,
         total: comments.length,
       });
     } catch (error) {
-      return response(500, error);
+      return buildApiResponse(500, error);
     }
   };
 }
@@ -71,7 +71,7 @@ export function createPropertyComment() {
   return async (event: awsx.apigateway.Request) => {
     const authorId = uuidv4(); // FIXME: change id
     const propertyId = event.pathParameters!.id;
-    const body = JSON.parse(event.body || '');
+    const body = parseBody(event);
 
     try {
       const url = `${MLServerUrl}/analysis/comment`;
@@ -100,9 +100,9 @@ export function createPropertyComment() {
         Item: marshall(comment),
       }).promise();
 
-      return response(200, comment);
+      return buildApiResponse(200, comment);
     } catch (error) {
-      return response(500, error);
+      return buildApiResponse(500, error);
     }
   };
 }

@@ -3,7 +3,8 @@ import * as uuid from 'uuid'
 import { createDynamo, createS3 } from './../initAWS';
 import {PropertyImageService, imageUrlFormatter} from './../propertyImageService'
 import { DynamoDB } from "aws-sdk";
-import {corsHeaders} from './corsHeaders'
+// import {corsHeaders} from './corsHeaders'
+import { parseBody, buildApiResponse } from '$src/apiGatewayUtilities';
 
 export const STATIC_BUCKET_ENV_KEY = 'staticbucket'
 export const STATIC_DOMAIN_ENV_KEY = 'staticdomain'
@@ -18,25 +19,6 @@ function toResponse(dynamodbEntry: DynamoDB.AttributeMap, toUrl: (key: string) =
             ? toUrl(dynamodbEntry.cover_image_key.S) 
             : undefined
     }
-}
-
-function buildApiResponse(statusCode: number, body: {[key: string]: any}): awsx.apigateway.Response {
-    return {
-        headers: corsHeaders,
-        body: JSON.stringify(body),
-        statusCode: statusCode
-    }
-}
-
-function parseBody(event: awsx.apigateway.Request): {[key: string]: any} {
-    let body = event.body || '{}'
-    if(event.isBase64Encoded) {
-        let buffer = new Buffer(body, 'base64')
-
-        return JSON.parse(buffer.toString());
-    }
-
-    return JSON.parse(body)
 }
 
 function buildNotFound() {
@@ -178,7 +160,7 @@ export function propertyGetById() {
     
             return response.Item 
             ? buildApiResponse(200, toResponse(response.Item, (key) => imageUrlFormatter(key, staticDomain))) 
-            : buildNotFound();          
+            : buildNotFound();
     
         } catch(e){
             console.error(e)
