@@ -33,7 +33,7 @@ function parseBody(event: awsx.apigateway.Request): {[key: string]: any} {
     if(event.isBase64Encoded) {
         let buffer = new Buffer(body, 'base64')
 
-        return buffer.toJSON()
+        return JSON.parse(buffer.toString());
     }
 
     return JSON.parse(body)
