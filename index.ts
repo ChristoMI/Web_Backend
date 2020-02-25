@@ -2,13 +2,23 @@ import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
 import * as awsx from "@pulumi/awsx";
 import { testRouteGet, testRouteCreate } from "./src/routes/testRoute";
-import { propertyInsert, propertyUpdate, propertyGetById, propertiesGet } from "./src/routes/propertiesRoute";
+import { propertyInsert, propertyUpdate, propertyGetById, propertiesGet, STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from "./src/routes/propertiesRoute";
 
 import './infrastructure/dynamodb'
+import { staticBucket, staticDomain } from './infrastructure/staticContent'
 
 const stackConfig = new pulumi.Config("site");
 const domain = stackConfig.require("domain");
 const certArn = stackConfig.require("certificateArn");
+
+const variables = {
+    STATIC_BUCKET_ENV_KEY: staticBucket,
+    STATIC_DOMAIN_ENV_KEY: staticDomain
+}
+
+const environment = {
+    variables
+}
 
 const api = new awsx.apigateway.API("booking-api", {
     routes: [{
@@ -44,7 +54,8 @@ const api = new awsx.apigateway.API("booking-api", {
             reservedConcurrentExecutions: 1,
             tracingConfig: {
                 mode: 'Active'
-            }
+            },
+            environment
         })
     },
     {
@@ -58,7 +69,8 @@ const api = new awsx.apigateway.API("booking-api", {
             reservedConcurrentExecutions: 1,
             tracingConfig: {
                 mode: 'Active'
-            }
+            },
+            environment
         })
     },
     {
@@ -69,7 +81,8 @@ const api = new awsx.apigateway.API("booking-api", {
             reservedConcurrentExecutions: 1,
             tracingConfig: {
                 mode: 'Active'
-            }
+            },
+            environment
         })
     },
     {
@@ -83,7 +96,8 @@ const api = new awsx.apigateway.API("booking-api", {
             reservedConcurrentExecutions: 1,
             tracingConfig: {
                 mode: 'Active'
-            }
+            },
+            environment
         })
     }],
     stageArgs: {

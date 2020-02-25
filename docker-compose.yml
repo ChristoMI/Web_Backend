@@ -3,3 +3,14 @@ dynamodb:
   image: amazon/dynamodb-local:latest
   ports:
     - "8000:8000"
+
+
+s3:
+  image: minio/minio:latest
+  ports:
+    - "9000:9000"
+  command: server /home/shared
+  environment:
+    MINIO_ACCESS_KEY: test
+    MINIO_SECRET_KEY: testtesttest
+    MINIO_REGION: us-west-2
