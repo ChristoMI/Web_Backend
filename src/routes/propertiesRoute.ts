@@ -28,6 +28,17 @@ function buildApiResponse(statusCode: number, body: {[key: string]: any}): awsx.
     }
 }
 
+function parseBody(event: awsx.apigateway.Request): {[key: string]: any} {
+    let body = event.body || '{}'
+    if(event.isBase64Encoded) {
+        let buffer = new Buffer(body, 'base64')
+
+        return buffer.toJSON()
+    }
+
+    return JSON.parse(body)
+}
+
 function buildNotFound() {
     return buildApiResponse(404, {message: 'Not Found'})
 }
@@ -47,7 +58,7 @@ export function propertyInsert() {
     return async (event: awsx.apigateway.Request) => {
         try{
             const newId = uuid();
-            const body = JSON.parse(event.body || '{}');
+            const body = parseBody(event);
             const date = new Date().toISOString();
             
             let imageKey: string | undefined = undefined
@@ -101,7 +112,7 @@ export function propertyUpdate() {
     return async (event: awsx.apigateway.Request) => {
         try{
             const id = event.pathParameters ? event.pathParameters.id : '';
-            const body = JSON.parse(event.body || '{}')
+            const body = parseBody(event);
     
             const search = await dynamo.getItem({
                 TableName: 'properties',
