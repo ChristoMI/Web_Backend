@@ -34,7 +34,7 @@ describe('testRoute function', () => {
 
 describe('comments', () => {
   before(() => {
-    process.env.MLServerUrl = 'http://localhost:5000';
+    process.env.MLServerUrl = 'http://54.214.143.113:80';
   });
 
   const propertyId = '9623d2a9-2605-4fbe-82dc-40b5197a1566';
