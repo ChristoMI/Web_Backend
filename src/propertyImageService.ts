@@ -26,4 +26,4 @@ export class PropertyImageService {
     }
 }
 
-export const imageUrlFormatter = (key: string, domainName: string) => resolve(domainName, key)
+export const imageUrlFormatter = (key: string, domainName: string) => resolve('https://' + domainName, key)

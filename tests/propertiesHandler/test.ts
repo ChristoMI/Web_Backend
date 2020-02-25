@@ -29,6 +29,7 @@ describe('propertiesRoute route', () => {
         expect(JSON.parse(result.body).created_date).to.not.be.empty;
         expect(JSON.parse(result.body).cover_image_url).to.not.be.empty;
         expect(JSON.parse(result.body).cover_image_url).to.contain(filename);
+        expect(JSON.parse(result.body).cover_image_url).to.satisfy((s: string) => s.startsWith('https://'), result.body);
     });
 
     it('should return new property on get after create', async () => {
