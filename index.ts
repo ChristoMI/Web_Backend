@@ -21,7 +21,7 @@ const environment = {
     variables
 }
 
-const routes: Route[] = [{
+let routes: Route[] = [{
     path: "/test/{id}",
     method: "GET",
     requiredParameters: [
@@ -119,6 +119,7 @@ function addCors(routes: Route[]) {
     })
 
     const newRoutes = Array.from(routes)
+    
     for(const route of routes) {
         newRoutes.push({
             method: "OPTIONS",
@@ -126,9 +127,11 @@ function addCors(routes: Route[]) {
             eventHandler: corslambda
         })
     }
+
+    return newRoutes
 }
 
-addCors(routes)
+routes = addCors(routes)
 
 const api = new awsx.apigateway.API("booking-api", {
     routes: routes,

@@ -12,7 +12,10 @@ const bucket = new aws.s3.Bucket(bucketName, {
     acl: "public-read",
     corsRules: [
         {allowedMethods: ["GET"], allowedOrigins: ["*"], allowedHeaders: ["*"]}
-    ]
+    ],
+    website: {
+        indexDocument: "index.html"
+    }
 });
 
 const hour = 60 * 60;
