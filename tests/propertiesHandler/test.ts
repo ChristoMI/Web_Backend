@@ -3,7 +3,7 @@ import './../configTestEnvironment'
 import {createRequestFromBlueprint} from './../testApiGatewayRequest'
 import { propertyInsert, propertyUpdate, propertyGetById, propertiesGet, STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from "./../../src/routes/propertiesRoute";
 
-describe('testRoute function', () => {
+describe('propertiesRoute route', () => {
     before(() => {
         process.env[STATIC_BUCKET_ENV_KEY] = 'booking-static-content'
         process.env[STATIC_DOMAIN_ENV_KEY] = 'someweirdsite.weirddomain.weird'
