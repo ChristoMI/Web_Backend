@@ -25,6 +25,7 @@
         "@pulumi/pulumi": "^1.0.0",
         "aws-sdk": "^2.621.0",
         "aws-xray-sdk": "^2.5.0",
+        "axios": "^0.19.2",
         "module-alias": "^2.2.2",
         "uuid": "^3.4.0"
     },
