@@ -3,3 +3,5 @@ config:
   aws:profile: pulumi
   site:domain: api.booking.knine.xyz
   site:certificateArn: arn:aws:acm:us-east-1:049059941555:certificate/b8a3b426-bf51-45d0-bfd1-2b28cff50416
+  static:domain: static.booking.knine.xyz
+  static:certificateArn: arn:aws:acm:us-east-1:049059941555:certificate/a2db74db-47ff-4ab1-ae72-e65c493f472f
