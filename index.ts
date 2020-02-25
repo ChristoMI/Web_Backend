@@ -102,7 +102,7 @@ const routes: Route[] = [{
 }]
 
 function addCors(routes: Route[]) {
-    const corslambda = new aws.lambda.CallbackFunction<awsx.apigateway.Request, awsx.apigateway.Response>("propertyUpdate", {
+    const corslambda = new aws.lambda.CallbackFunction<awsx.apigateway.Request, awsx.apigateway.Response>("corsLambda", {
         callback: async (e) => ({
             statusCode: 200,
             body: '',
