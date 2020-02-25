@@ -107,15 +107,10 @@ function addCors(routes: Route[]) {
             statusCode: 200,
             body: '',
             headers: {
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Headers": "*",
-                "Access-Control-Allow-Methods": "*"
+                "Access-Control-Allow-Origin": "*"
             }
         }),
-        reservedConcurrentExecutions: 1,
-        tracingConfig: {
-            mode: 'Active'
-        }
+        reservedConcurrentExecutions: 1
     })
 
     const newRoutes = Array.from(routes)
