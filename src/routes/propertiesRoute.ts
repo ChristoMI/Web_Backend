@@ -17,7 +17,7 @@ function toResponse(dynamodbEntry: DynamoDB.AttributeMap, toUrl: (key: string) =
         cover_image_url: (dynamodbEntry.cover_image_key && dynamodbEntry.cover_image_key.S)
             ? toUrl(dynamodbEntry.cover_image_key.S) 
             : undefined
-    }
+    };
 }
 
 function buildApiResponse(statusCode: number, body: {[key: string]: any}): awsx.apigateway.Response {
