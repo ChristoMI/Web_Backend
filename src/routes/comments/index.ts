@@ -34,6 +34,17 @@ function sortByDate(field: any) {
   return (list: Array<any>) => list.sort((a, b) => (+new Date(b[field]) - +new Date(a[field])));
 }
 
+async function hasProperty(dynamo: any, propertyId: string): Promise<boolean> {
+  const data = await dynamo.getItem({
+    TableName: 'properties',
+    Key: {
+      id: { S: propertyId },
+    },
+  }).promise();
+
+  return !!data.Item;
+}
+
 export function getCommentsByPropertyId() {
   const dynamo = createDynamo();
 
@@ -50,13 +61,18 @@ export function getCommentsByPropertyId() {
     };
 
     try {
+      const exist = await hasProperty(dynamo, propertyId);
+
+      if (!exist) {
+        return buildApiResponse(404, {
+          message: 'Property not found',
+        });
+      }
+
       const comments = await query(dynamo, params)
         .then(sortByDate('createdDate'));
 
-      return buildApiResponse(200, {
-        items: comments,
-        total: comments.length,
-      });
+      return buildApiResponse(200, comments);
     } catch (error) {
       return buildApiResponse(500, error);
     }
@@ -74,6 +90,14 @@ export function createPropertyComment() {
     const body = parseBody(event);
 
     try {
+      const exist = await hasProperty(dynamo, propertyId);
+
+      if (!exist) {
+        return buildApiResponse(404, {
+          message: 'Property not found',
+        });
+      }
+
       const url = `${MLServerUrl}/analysis/comment`;
 
       const { data: mood } = await axios.post(url, {
@@ -84,7 +108,12 @@ export function createPropertyComment() {
         id: uuidv4(),
         text: body.text,
         propertyId,
-        authorId,
+        author: {
+          id: authorId,
+          firstName: 'FirstName',
+          lastName: 'LastName',
+          avatarUrl: null,
+        },
         mood: {
           type: getMoodType(mood.compound),
           neg: mood.neg,
