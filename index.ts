@@ -13,8 +13,8 @@ const domain = stackConfig.require("domain");
 const certArn = stackConfig.require("certificateArn");
 
 const variables = {
-    STATIC_BUCKET_ENV_KEY: staticBucket,
-    STATIC_DOMAIN_ENV_KEY: staticDomain
+    [STATIC_BUCKET_ENV_KEY]: staticBucket,
+    [STATIC_DOMAIN_ENV_KEY]: staticDomain
 }
 
 const environment = {
