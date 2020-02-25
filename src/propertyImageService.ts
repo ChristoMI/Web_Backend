@@ -13,13 +13,13 @@ export class PropertyImageService {
         this.bucketName = bucketName
     }
 
-    async uploadCoverImage(propertyId: string, imageContent: string, imageFilename: string) {
+    async uploadCoverImage(propertyId: string, imageContentBase64: string, imageFilename: string) {
         const key = join(this.coverImagePrefix, propertyId, uuid(), imageFilename)
         
         await this.s3.putObject({
             Bucket: this.bucketName,
             Key: key,
-            Body: imageContent,
+            Body: new Buffer(imageContentBase64, 'base64'),
             ACL: 'public-read'
         }).promise()
 
