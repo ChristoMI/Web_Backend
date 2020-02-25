@@ -20,7 +20,7 @@ export class PropertyImageService {
             Bucket: this.bucketName,
             Key: key,
             Body: imageContent
-        })
+        }).promise()
 
         return key
     }
