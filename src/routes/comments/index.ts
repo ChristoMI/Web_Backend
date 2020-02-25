@@ -10,13 +10,13 @@ import { createDynamo } from '$src/initAWS';
 import { getMoodType } from './moodTypeConversion';
 
 async function query(
-  dynamo: any,
+  dynamo: DynamoDB,
   params: DynamoDB.Types.QueryInput,
   items: Array<Object> = [],
 ): Promise<Array<Object>> {
   const data = await dynamo.query(params).promise();
 
-  const newItems = items.concat(unmarshalls(data.Items));
+  const newItems = items.concat(unmarshalls(data.Items || []));
 
   if (data.LastEvaluatedKey) {
     const newParams = {
@@ -34,7 +34,7 @@ function sortByDate(field: any) {
   return (list: Array<any>) => list.sort((a, b) => (+new Date(b[field]) - +new Date(a[field])));
 }
 
-async function hasProperty(dynamo: any, propertyId: string): Promise<boolean> {
+async function hasProperty(dynamo: DynamoDB, propertyId: string): Promise<boolean> {
   const data = await dynamo.getItem({
     TableName: 'properties',
     Key: {
