@@ -5,7 +5,7 @@ import { propertyInsert, propertyUpdate, propertyGetById, propertiesGet, STATIC_
 
 describe('propertiesRoute route', () => {
     before(() => {
-        process.env[STATIC_BUCKET_ENV_KEY] = 'booking-static-content'
+        process.env[STATIC_BUCKET_ENV_KEY] = 'testbucket'
         process.env[STATIC_DOMAIN_ENV_KEY] = 'someweirdsite.weirddomain.weird'
     })
 

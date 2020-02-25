@@ -148,3 +148,4 @@ const domainMapping = new aws.apigateway.BasePathMapping("booking-domain-mapping
 });
 
 export const url = api.url
+export const staticBucketName = staticBucket

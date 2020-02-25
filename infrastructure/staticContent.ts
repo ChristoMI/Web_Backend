@@ -77,4 +77,4 @@ const cloudfrontDistribution = new aws.cloudfront.Distribution("booking-static",
 
 export const cfDomain = cloudfrontDistribution.domainName
 export const staticDomain = domain
-export const staticBucket = bucketName
+export const staticBucket = bucket.id
