@@ -34,10 +34,20 @@ export function buildApiResponse(
   };
 }
 
-export function logError(e: Error) {
-  const segment = AWSXray.getSegment()
-  if(segment) {
-    segment.addError(e)
+export function add500Handler(func: (event: apigateway.Request) => Promise<apigateway.Response>) {
+  return async (e: apigateway.Request) => {
+    try {
+      return await func(e)
+    }
+    catch(error) {
+      const segment = AWSXray.getSegment()
+      if(segment) {
+        const subsegment = segment.addNewSubsegment('exception')
+        subsegment.addError(error)
+        console.error(error)
+        subsegment.close()
+      }
+      return buildApiResponse(500, error)
+    }
   }
-  console.error(e)
 }

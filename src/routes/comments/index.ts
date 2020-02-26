@@ -4,7 +4,7 @@ import * as awsx from '@pulumi/awsx';
 import { v4 as uuidv4 } from 'uuid';
 import { DynamoDB } from 'aws-sdk';
 import axios from 'axios';
-import { marshall, unmarshalls, parseBody, buildApiResponse, logError } from '$src/apiGatewayUtilities';
+import { marshall, unmarshalls, parseBody, buildApiResponse, add500Handler } from '$src/apiGatewayUtilities';
 import { createDynamo } from '$src/initAWS';
 
 import { getMoodType } from './moodTypeConversion';
@@ -48,7 +48,7 @@ async function hasProperty(dynamo: DynamoDB, propertyId: string): Promise<boolea
 export function getCommentsByPropertyId() {
   const dynamo = createDynamo();
 
-  return async (event: awsx.apigateway.Request) => {
+  const handler = async (event: awsx.apigateway.Request) => {
     const propertyId = event.pathParameters!.id;
 
     const params = {
@@ -60,24 +60,21 @@ export function getCommentsByPropertyId() {
       Limit: 1000,
     };
 
-    try {
-      const exist = await hasProperty(dynamo, propertyId);
+    const exist = await hasProperty(dynamo, propertyId);
 
-      if (!exist) {
-        return buildApiResponse(404, {
-          message: 'Property not found',
-        });
-      }
-
-      const comments = await query(dynamo, params)
-        .then(sortByDate('createdDate'));
-
-      return buildApiResponse(200, comments);
-    } catch (error) {
-      logError(error);
-      return buildApiResponse(500, error);
+    if (!exist) {
+      return buildApiResponse(404, {
+        message: 'Property not found',
+      });
     }
+
+    const comments = await query(dynamo, params)
+      .then(sortByDate('createdDate'));
+
+    return buildApiResponse(200, comments);
   };
+
+  return add500Handler(handler);
 }
 
 export function createPropertyComment() {
@@ -85,55 +82,52 @@ export function createPropertyComment() {
 
   const MLServerUrl = process.env.MLServerUrl;
 
-  return async (event: awsx.apigateway.Request) => {
+  const handler = async (event: awsx.apigateway.Request) => {
     const authorId = uuidv4(); // FIXME: change id
     const propertyId = event.pathParameters!.id;
     const body = parseBody(event);
 
-    try {
-      const exist = await hasProperty(dynamo, propertyId);
+    const exist = await hasProperty(dynamo, propertyId);
 
-      if (!exist) {
-        return buildApiResponse(404, {
-          message: 'Property not found',
-        });
-      }
-
-      const url = `${MLServerUrl}/analysis/comment`;
-
-      const { data: mood } = await axios.post(url, {
-        comment: body.text,
+    if (!exist) {
+      return buildApiResponse(404, {
+        message: 'Property not found',
       });
-
-      const comment = {
-        id: uuidv4(),
-        text: body.text,
-        propertyId,
-        author: {
-          id: authorId,
-          firstName: 'FirstName',
-          lastName: 'LastName',
-          avatarUrl: null,
-        },
-        mood: {
-          type: getMoodType(mood.compound),
-          neg: mood.neg,
-          neu: mood.neu,
-          pos: mood.pos,
-          compound: mood.compound,
-        },
-        createdDate: new Date().toISOString(),
-      };
-
-      await dynamo.putItem({
-        TableName: 'comment',
-        Item: marshall(comment),
-      }).promise();
-
-      return buildApiResponse(200, comment);
-    } catch (error) {
-      logError(error);
-      return buildApiResponse(500, error);
     }
+
+    const url = `${MLServerUrl}/analysis/comment`;
+
+    const { data: mood } = await axios.post(url, {
+      comment: body.text,
+    });
+
+    const comment = {
+      id: uuidv4(),
+      text: body.text,
+      propertyId,
+      author: {
+        id: authorId,
+        firstName: 'FirstName',
+        lastName: 'LastName',
+        avatarUrl: null,
+      },
+      mood: {
+        type: getMoodType(mood.compound),
+        neg: mood.neg,
+        neu: mood.neu,
+        pos: mood.pos,
+        compound: mood.compound,
+      },
+      createdDate: new Date().toISOString(),
+    };
+
+    await dynamo.putItem({
+      TableName: 'comment',
+      Item: marshall(comment),
+    }).promise();
+
+    return buildApiResponse(200, comment);
   };
+
+  return add500Handler(handler)
 }
