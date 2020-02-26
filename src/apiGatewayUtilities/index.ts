@@ -44,9 +44,10 @@ export function add500Handler(func: (event: apigateway.Request) => Promise<apiga
       if(segment) {
         const subsegment = segment.addNewSubsegment('exception')
         subsegment.addError(error)
-        console.error(error)
         subsegment.close()
       }
+
+      console.error(error);
       return buildApiResponse(500, error)
     }
   }
