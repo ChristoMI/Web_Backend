@@ -1,5 +1,6 @@
 import { apigateway } from "@pulumi/awsx";
 import { DynamoDB } from 'aws-sdk';
+import * as AWSXray from 'aws-xray-sdk'
 
 export const marshall = DynamoDB.Converter.marshall;
 export const unmarshall = DynamoDB.Converter.unmarshall;
@@ -31,4 +32,12 @@ export function buildApiResponse(
       'Access-Control-Allow-Credentials': true,
     },
   };
+}
+
+export function logError(e: Error) {
+  const segment = AWSXray.getSegment()
+  if(segment) {
+    segment.addError(e)
+  }
+  console.error(e)
 }

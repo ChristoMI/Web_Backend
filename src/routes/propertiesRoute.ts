@@ -4,7 +4,7 @@ import { createDynamo, createS3 } from './../initAWS';
 import {PropertyImageService, imageUrlFormatter} from './../propertyImageService'
 import { DynamoDB } from "aws-sdk";
 // import {corsHeaders} from './corsHeaders'
-import { parseBody, buildApiResponse } from '$src/apiGatewayUtilities';
+import { parseBody, buildApiResponse, logError } from '$src/apiGatewayUtilities';
 
 export const STATIC_BUCKET_ENV_KEY = 'staticbucket'
 export const STATIC_DOMAIN_ENV_KEY = 'staticdomain'
@@ -73,7 +73,7 @@ export function propertyInsert() {
             })
 
         } catch(e){
-            console.error(e)
+            logError(e)
             return buildApiResponse(500, e)
         }
     }
@@ -135,7 +135,7 @@ export function propertyUpdate() {
             })
 
         } catch(e){
-            console.error(e)
+            logError(e)
             return buildApiResponse(500, e)
         }
     }
@@ -163,7 +163,7 @@ export function propertyGetById() {
             : buildNotFound();
     
         } catch(e){
-            console.error(e)
+            logError(e)
             return buildApiResponse(500, e)
         }
     }
@@ -187,7 +187,7 @@ export function propertiesGet() {
 
             return buildApiResponse(200, collection)
         } catch(e){
-            console.error(e)
+            logError(e)
             return buildApiResponse(500, e)
         }
     }

@@ -4,7 +4,7 @@ import * as awsx from '@pulumi/awsx';
 import { v4 as uuidv4 } from 'uuid';
 import { DynamoDB } from 'aws-sdk';
 import axios from 'axios';
-import { marshall, unmarshalls, parseBody, buildApiResponse } from '$src/apiGatewayUtilities';
+import { marshall, unmarshalls, parseBody, buildApiResponse, logError } from '$src/apiGatewayUtilities';
 import { createDynamo } from '$src/initAWS';
 
 import { getMoodType } from './moodTypeConversion';
@@ -74,6 +74,7 @@ export function getCommentsByPropertyId() {
 
       return buildApiResponse(200, comments);
     } catch (error) {
+      logError(error);
       return buildApiResponse(500, error);
     }
   };
@@ -131,6 +132,7 @@ export function createPropertyComment() {
 
       return buildApiResponse(200, comment);
     } catch (error) {
+      logError(error);
       return buildApiResponse(500, error);
     }
   };
