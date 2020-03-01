@@ -5,10 +5,6 @@ import * as AWSXray from 'aws-xray-sdk'
 export const marshall = DynamoDB.Converter.marshall;
 export const unmarshall = DynamoDB.Converter.unmarshall;
 
-export function unmarshalls(items: DynamoDB.Types.ItemList) {
-  return items.map((item) => unmarshall(item));
-}
-
 export function parseBody(event: apigateway.Request): { [key: string]: any } {
   const body = event.body || '{}';
 

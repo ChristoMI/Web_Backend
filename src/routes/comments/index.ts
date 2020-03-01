@@ -3,11 +3,31 @@
 import * as awsx from '@pulumi/awsx';
 import { v4 as uuidv4 } from 'uuid';
 import { DynamoDB } from 'aws-sdk';
-import axios from 'axios';
-import { marshall, unmarshalls, parseBody, buildApiResponse, add500Handler } from '$src/apiGatewayUtilities';
+import { marshall, parseBody, buildApiResponse, add500Handler } from '$src/apiGatewayUtilities';
 import { createDynamo } from '$src/initAWS';
+import AnalysisService from '$src/services/AnalysisService';
 
 import { getMoodType } from './moodTypeConversion';
+
+function toResponse(entry: DynamoDB.AttributeMap) {
+  return {
+    id: entry.id.S,
+    text: entry.text.S,
+    propertyId: entry.propertyId.S,
+    author: {
+      id: entry.author.M!.id.S,
+      firstName: entry.author.M!.firstName.S,
+      lastName: entry.author.M!.lastName.S,
+      avatarUrl: entry.author.M!.avatarUrl.S || null,
+    },
+    moodType: getMoodType(+entry.mood.M!.compound.N!),
+    createdDate: entry.createdDate.S,
+  };
+}
+
+function toArrayResponse(items: DynamoDB.Types.ItemList) {
+  return items.map((item) => toResponse(item));
+}
 
 async function query(
   dynamo: DynamoDB,
@@ -16,7 +36,7 @@ async function query(
 ): Promise<Array<Object>> {
   const data = await dynamo.query(params).promise();
 
-  const newItems = items.concat(unmarshalls(data.Items || []));
+  const newItems = items.concat(data.Items || []);
 
   if (data.LastEvaluatedKey) {
     const newParams = {
@@ -71,7 +91,7 @@ export function getCommentsByPropertyId() {
     const comments = await query(dynamo, params)
       .then(sortByDate('createdDate'));
 
-    return buildApiResponse(200, comments);
+    return buildApiResponse(200, toArrayResponse(comments));
   };
 
   return add500Handler(handler);
@@ -80,7 +100,7 @@ export function getCommentsByPropertyId() {
 export function createPropertyComment() {
   const dynamo = createDynamo();
 
-  const MLServerUrl = process.env.MLServerUrl;
+  const analysisService = new AnalysisService(process.env.AnalysisServerUrl!);
 
   const handler = async (event: awsx.apigateway.Request) => {
     const authorId = uuidv4(); // FIXME: change id
@@ -95,13 +115,9 @@ export function createPropertyComment() {
       });
     }
 
-    const url = `${MLServerUrl}/analysis/comment`;
+    const mood = await analysisService.getCommentMood(body.text);
 
-    const { data: mood } = await axios.post(url, {
-      comment: body.text,
-    });
-
-    const comment = {
+    const comment = marshall({
       id: uuidv4(),
       text: body.text,
       propertyId,
@@ -112,21 +128,20 @@ export function createPropertyComment() {
         avatarUrl: null,
       },
       mood: {
-        type: getMoodType(mood.compound),
         neg: mood.neg,
         neu: mood.neu,
         pos: mood.pos,
         compound: mood.compound,
       },
       createdDate: new Date().toISOString(),
-    };
+    });
 
     await dynamo.putItem({
       TableName: 'comment',
-      Item: marshall(comment),
+      Item: comment,
     }).promise();
 
-    return buildApiResponse(200, comment);
+    return buildApiResponse(200, toResponse(comment));
   };
 
   return add500Handler(handler)

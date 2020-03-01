@@ -22,7 +22,7 @@ const certArn = stackConfig.require('certificateArn');
 const variables = {
   [STATIC_BUCKET_ENV_KEY]: staticBucket,
   [STATIC_DOMAIN_ENV_KEY]: staticDomain,
-  MLServerUrl: 'http://54.214.143.113:80',
+  AnalysisServerUrl: 'http://54.214.143.113:80',
 };
 
 const environment = {
