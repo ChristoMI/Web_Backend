@@ -1,13 +1,11 @@
 export function getMoodType(compound: Number) {
-  let type = 'neutral';
-
   if (compound >= 0.05) {
-    type = 'positive';
+    return 'positive';
   }
 
-  if (compound <= 0.05) {
-    type = 'negative';
+  if (compound <= -0.05) {
+    return 'negative';
   }
 
-  return type;
+  return 'neutral';
 }
