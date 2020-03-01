@@ -115,9 +115,7 @@ export function createPropertyComment() {
       });
     }
 
-    const mood = await analysisService.getCommentMood({
-      comment: body.text,
-    });
+    const mood = await analysisService.getCommentMood(body.text);
 
     const comment = marshall({
       id: uuidv4(),

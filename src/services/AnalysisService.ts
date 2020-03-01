@@ -1,9 +1,5 @@
 import axios from 'axios';
 
-type CommentMoodPayload = {
-  comment: string;
-}
-
 class AnalysisService {
   private url: string;
 
@@ -11,8 +7,8 @@ class AnalysisService {
     this.url = url;
   }
 
-  async getCommentMood(payload: CommentMoodPayload) {
-    const response = await axios.post(`${this.url}/analysis/comment`, payload);
+  async getCommentMood(comment: string) {
+    const response = await axios.post(`${this.url}/analysis/comment`, { comment });
     return response.data;
   }
 }
