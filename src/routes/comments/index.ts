@@ -20,7 +20,7 @@ function toResponse(entry: DynamoDB.AttributeMap) {
       lastName: entry.author.M!.lastName.S,
       avatarUrl: entry.author.M!.avatarUrl.S,
     },
-    moodType: entry.mood.M!.type.S,
+    moodType: getMoodType(+entry.mood.M!.compound.N!),
     createdDate: entry.createdDate.S,
   };
 }
@@ -130,7 +130,6 @@ export function createPropertyComment() {
         avatarUrl: null,
       },
       mood: {
-        type: getMoodType(mood.compound),
         neg: mood.neg,
         neu: mood.neu,
         pos: mood.pos,
