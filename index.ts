@@ -189,5 +189,28 @@ const domainMapping = new aws.apigateway.BasePathMapping('booking-domain-mapping
   stageName: api.stage.stageName,
 });
 
-export const url = api.url;
+const userPool = new aws.cognito.UserPool("booking-user-pool", {
+    autoVerifiedAttributes: ["email"],
+});
+
+const userPoolClient = new aws.cognito.UserPoolClient("booking-user-pool-client", {
+    allowedOauthFlows: ["code"],
+    allowedOauthFlowsUserPoolClient: true,
+    allowedOauthScopes: ["phone", "email", "openid"],
+    callbackUrls: ["http://localhost:3000"],
+    // defaultRedirectUri: domain,
+    generateSecret: false,
+    supportedIdentityProviders: ["COGNITO"],
+    userPoolId: userPool.id,
+});
+
+const userPoolDomain = new aws.cognito.UserPoolDomain("booking-user-pool-domain", {
+    domain: "booking-user-pool-domain",
+    userPoolId: userPool.id,
+});
+
+export const userPoolId = userPool.id;
+export const userPoolName = userPool.name;
+export const userPoolClientId = userPoolClient.id;
+export const url = api.url
 export const staticBucketName = staticBucket;
