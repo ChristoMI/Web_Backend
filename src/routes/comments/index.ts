@@ -25,7 +25,7 @@ function toResponse(entry: DynamoDB.AttributeMap) {
   };
 }
 
-function unmarshalls(items: DynamoDB.Types.ItemList) {
+function toArrayResponse(items: DynamoDB.Types.ItemList) {
   return items.map((item) => toResponse(item));
 }
 
@@ -91,7 +91,7 @@ export function getCommentsByPropertyId() {
     const comments = await query(dynamo, params)
       .then(sortByDate('createdDate'));
 
-    return buildApiResponse(200, unmarshalls(comments));
+    return buildApiResponse(200, toArrayResponse(comments));
   };
 
   return add500Handler(handler);
