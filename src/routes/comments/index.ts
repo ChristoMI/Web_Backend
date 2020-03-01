@@ -100,7 +100,7 @@ export function getCommentsByPropertyId() {
 export function createPropertyComment() {
   const dynamo = createDynamo();
 
-  const analysisService = new AnalysisService();
+  const analysisService = new AnalysisService(process.env.AnalysisServerUrl!);
 
   const handler = async (event: awsx.apigateway.Request) => {
     const authorId = uuidv4(); // FIXME: change id

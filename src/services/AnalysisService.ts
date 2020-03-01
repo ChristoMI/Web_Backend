@@ -7,8 +7,8 @@ type CommentMoodPayload = {
 class AnalysisService {
   private url: string;
 
-  constructor() {
-    this.url = process.env.AnalysisServerUrl!;
+  constructor(url: string) {
+    this.url = url;
   }
 
   async getCommentMood(payload: CommentMoodPayload) {
