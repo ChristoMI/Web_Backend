@@ -18,7 +18,7 @@ function toResponse(entry: DynamoDB.AttributeMap) {
       id: entry.author.M!.id.S,
       firstName: entry.author.M!.firstName.S,
       lastName: entry.author.M!.lastName.S,
-      avatarUrl: entry.author.M!.avatarUrl.S,
+      avatarUrl: entry.author.M!.avatarUrl.S || null,
     },
     moodType: getMoodType(+entry.mood.M!.compound.N!),
     createdDate: entry.createdDate.S,
