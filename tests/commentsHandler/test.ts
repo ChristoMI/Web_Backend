@@ -8,6 +8,7 @@ import { createRequestFromBlueprint } from '../testApiGatewayRequest';
 import * as commentsRoutes from '$src/routes/comments';
 import { propertyInsert, STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '$src/routes/propertiesRoute';
 import AnalysisService from '$src/services/AnalysisService';
+import { getMoodType } from '$src/routes/comments/moodTypeConversion';
 
 import '../configTestEnvironment';
 
@@ -23,6 +24,21 @@ describe('comments', () => {
         pos: 0,
         compound: 0,
       }));
+  });
+
+  it('should return positive mood', () => {
+    expect(getMoodType(0.05)).to.equal('positive');
+    expect(getMoodType(0.06)).to.equal('positive');
+  });
+
+  it('should return negative mood', () => {
+    expect(getMoodType(-0.05)).to.equal('negative');
+    expect(getMoodType(-0.06)).to.equal('negative');
+  });
+
+  it('should return neutral mood', () => {
+    expect(getMoodType(-0.049)).to.equal('neutral');
+    expect(getMoodType(+0.049)).to.equal('neutral');
   });
 
   it('should return 404 error on create', async () => {
