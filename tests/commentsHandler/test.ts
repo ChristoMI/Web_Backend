@@ -61,15 +61,28 @@ describe('comments', () => {
 
     const propertyId = JSON.parse(data.body).id;
 
+    const text = 'Horrible hotel, never will stay here again';
+
     const request = createRequestFromBlueprint({
-      text: 'Horrible hotel, never will stay here again',
+      text,
     }, {
       id: propertyId,
     });
 
     const result = await commentsRoutes.createPropertyComment()(request);
+    const comment = JSON.parse(result.body);
 
     expect(result.statusCode).to.be.equal(200);
+
+    expect(comment.id).to.not.be.empty;
+    expect(comment.text).to.be.equal(text);
+    expect(comment.propertyId).to.be.equal(propertyId);
+    expect(comment.author).to.not.be.empty;
+    expect(comment.author.id).to.not.be.empty;
+    expect(comment.author.firstName).to.not.be.empty;
+    expect(comment.author.lastName).to.not.be.empty;
+    expect(comment.moodType).to.be.equal('neutral');
+    expect(comment.createdDate).to.not.be.empty;
   });
 
   it('should return 404 error on read comments', async () => {
