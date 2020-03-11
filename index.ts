@@ -59,12 +59,12 @@ const hostsUserPoolClient = new aws.cognito.UserPoolClient('booking-user-pool-cl
 
 const customersUserPoolDomain = new aws.cognito.UserPoolDomain('booking-user-pool-domain-customers', {
   domain: 'booking-user-pool-domain',
-  userPoolId: customersUserPoolClient.id,
+  userPoolId: customersUserPool.id,
 });
 
 const hostsUserPoolDomain = new aws.cognito.UserPoolDomain('booking-user-pool-domain-hosts', {
   domain: 'booking-user-pool-domain',
-  userPoolId: hostsUserPoolClient.id,
+  userPoolId: hostsUserPool.id,
 });
 
 const cognitoAuthorizerCustomers = awsx.apigateway.getCognitoAuthorizer({ authorizerName: 'CognitoAuthorizerCustomers', providerARNs: [customersUserPool] });
