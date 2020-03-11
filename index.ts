@@ -22,7 +22,7 @@ const certArn = stackConfig.require('certificateArn');
 const variables = {
   [STATIC_BUCKET_ENV_KEY]: staticBucket,
   [STATIC_DOMAIN_ENV_KEY]: staticDomain,
-  MLServerUrl: 'http://54.214.143.113:80',
+  AnalysisServerUrl: 'http://54.214.143.113:80',
 };
 
 const environment = {
@@ -231,8 +231,13 @@ const domainMapping = new aws.apigateway.BasePathMapping('booking-domain-mapping
   stageName: api.stage.stageName,
 });
 
-export const userPoolId = userPool.id;
-export const userPoolName = userPool.name;
-export const userPoolClientId = userPoolClient.id;
+export const customersUserPoolId = customersUserPool.id;
+export const customersUserPoolName = customersUserPool.name;
+export const customersUserPoolClientId = customersUserPoolClient.id;
+
+export const hostsUserPoolId = hostsUserPool.id;
+export const hostsUserPoolName = hostsUserPool.name;
+export const hostsUserPoolClientId = hostsUserPoolClient.id;
+
 export const url = api.url;
 export const staticBucketName = staticBucket;
