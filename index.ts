@@ -3,6 +3,7 @@ import 'module-alias/register'; // for alias
 import * as pulumi from '@pulumi/pulumi';
 import * as aws from '@pulumi/aws';
 import * as awsx from '@pulumi/awsx';
+import { Route } from '@pulumi/awsx/apigateway/api';
 import { testRouteGet, testRouteCreate } from './src/routes/testRoute';
 
 import {
@@ -12,7 +13,6 @@ import * as commentsRoutes from '$src/routes/comments';
 
 import './infrastructure/dynamodb';
 import { staticBucket, staticDomain } from './infrastructure/staticContent';
-import { Route } from '@pulumi/awsx/apigateway/api';
 
 
 const stackConfig = new pulumi.Config('site');
@@ -29,12 +29,54 @@ const environment = {
   variables,
 };
 
+const customersUserPool = new aws.cognito.UserPool('booking-user-pool-customers', {
+  autoVerifiedAttributes: ['email'],
+});
+
+const hostsUserPool = new aws.cognito.UserPool('booking-user-pool-hosts', {
+  autoVerifiedAttributes: ['email'],
+});
+
+const customersUserPoolClient = new aws.cognito.UserPoolClient('booking-user-pool-client-customers', {
+  allowedOauthFlows: ['code'],
+  allowedOauthFlowsUserPoolClient: true,
+  allowedOauthScopes: ['phone', 'email', 'openid'],
+  callbackUrls: ['http://localhost:3000'],
+  generateSecret: false,
+  supportedIdentityProviders: ['COGNITO'],
+  userPoolId: customersUserPool.id,
+});
+
+const hostsUserPoolClient = new aws.cognito.UserPoolClient('booking-user-pool-client-hosts', {
+  allowedOauthFlows: ['code'],
+  allowedOauthFlowsUserPoolClient: true,
+  allowedOauthScopes: ['phone', 'email', 'openid'],
+  callbackUrls: ['http://localhost:3000'],
+  generateSecret: false,
+  supportedIdentityProviders: ['COGNITO'],
+  userPoolId: hostsUserPool.id,
+});
+
+const customersUserPoolDomain = new aws.cognito.UserPoolDomain('booking-user-pool-domain-customers', {
+  domain: 'booking-user-pool-domain',
+  userPoolId: customersUserPoolClient.id,
+});
+
+const hostsUserPoolDomain = new aws.cognito.UserPoolDomain('booking-user-pool-domain-hosts', {
+  domain: 'booking-user-pool-domain',
+  userPoolId: hostsUserPoolClient.id,
+});
+
+const cognitoAuthorizerCustomers = awsx.apigateway.getCognitoAuthorizer({ authorizerName: 'CognitoAuthorizerCustomers', providerARNs: [customersUserPool] });
+const cognitoAuthorizeHosts = awsx.apigateway.getCognitoAuthorizer({ authorizerName: 'CognitoAuthorizerHosts', providerARNs: [hostsUserPool] });
+
 let routes: Route[] = [{
   path: '/test/{id}',
   method: 'GET',
   requiredParameters: [
     { in: 'path', name: 'id' },
   ],
+  authorizers: cognitoAuthorizerCustomers,
   eventHandler: new aws.lambda.CallbackFunction('testRouteGet', {
     callbackFactory: testRouteGet,
     reservedConcurrentExecutions: 1,
@@ -189,28 +231,8 @@ const domainMapping = new aws.apigateway.BasePathMapping('booking-domain-mapping
   stageName: api.stage.stageName,
 });
 
-const userPool = new aws.cognito.UserPool("booking-user-pool", {
-    autoVerifiedAttributes: ["email"],
-});
-
-const userPoolClient = new aws.cognito.UserPoolClient("booking-user-pool-client", {
-    allowedOauthFlows: ["code"],
-    allowedOauthFlowsUserPoolClient: true,
-    allowedOauthScopes: ["phone", "email", "openid"],
-    callbackUrls: ["http://localhost:3000"],
-    // defaultRedirectUri: domain,
-    generateSecret: false,
-    supportedIdentityProviders: ["COGNITO"],
-    userPoolId: userPool.id,
-});
-
-const userPoolDomain = new aws.cognito.UserPoolDomain("booking-user-pool-domain", {
-    domain: "booking-user-pool-domain",
-    userPoolId: userPool.id,
-});
-
 export const userPoolId = userPool.id;
 export const userPoolName = userPool.name;
 export const userPoolClientId = userPoolClient.id;
-export const url = api.url
+export const url = api.url;
 export const staticBucketName = staticBucket;
