@@ -57,14 +57,14 @@ const hostsUserPoolClient = new aws.cognito.UserPoolClient('booking-user-pool-cl
   userPoolId: hostsUserPool.id,
 });
 
-const customersUserPoolDomain = new aws.cognito.UserPoolDomain('booking-user-pool-domain-customers', {
+const customersUserPoolDomain = new aws.cognito.UserPoolDomain('booking-user-pool-domain-customer', {
   domain: 'booking-user-pool-domain',
   userPoolId: customersUserPool.id,
 }, {
   deleteBeforeReplace: true
 });
 
-const hostsUserPoolDomain = new aws.cognito.UserPoolDomain('booking-user-pool-domain-hosts', {
+const hostsUserPoolDomain = new aws.cognito.UserPoolDomain('booking-user-pool-domain-host', {
   domain: 'booking-user-pool-domain',
   userPoolId: hostsUserPool.id,
 }, {
