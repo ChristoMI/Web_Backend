@@ -9,6 +9,8 @@ export function testRouteCreate() {
   return async (event: awsx.apigateway.Request) => {
     const newId = uuid();
 
+    console.log('Current account: ' + event.requestContext.accountId);
+
     await dynamo.putItem({
       TableName: 'test-stuff',
       Item: { Id: { S: newId } },
