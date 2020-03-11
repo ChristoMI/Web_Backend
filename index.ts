@@ -68,7 +68,7 @@ const hostsUserPoolDomain = new aws.cognito.UserPoolDomain('booking-user-pool-do
 });
 
 const cognitoAuthorizerCustomers = awsx.apigateway.getCognitoAuthorizer({ authorizerName: 'CognitoAuthorizerCustomers', providerARNs: [customersUserPool] });
-const cognitoAuthorizeHosts = awsx.apigateway.getCognitoAuthorizer({ authorizerName: 'CognitoAuthorizerHosts', providerARNs: [hostsUserPool] });
+const cognitoAuthorizerHosts = awsx.apigateway.getCognitoAuthorizer({ authorizerName: 'CognitoAuthorizerHosts', providerARNs: [hostsUserPool] });
 
 let routes: Route[] = [{
   path: '/test/{id}',
