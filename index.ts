@@ -57,12 +57,12 @@ const hostsUserPool = new aws.cognito.UserPool('booking-user-pool-hosts', {
 });
 
 const customersUserPoolClient = new aws.cognito.UserPoolClient('booking-user-pool-client-customers', {
-  allowedOauthFlows: ['code'],
+  allowedOauthFlows: ['code', 'implicit'],
   allowedOauthFlowsUserPoolClient: true,
   allowedOauthScopes: ['phone', 'email', 'openid'],
-  callbackUrls: ['http://localhost:3000'],
+  callbackUrls: ['http://localhost:3000', 'https://landing.booking.knine.xyz/swagger'],
   generateSecret: false,
-  supportedIdentityProviders: ['COGNITO'],
+  supportedIdentityProviders: ['COGNITO', 'Google'],
   userPoolId: customersUserPool.id,
 });
 
