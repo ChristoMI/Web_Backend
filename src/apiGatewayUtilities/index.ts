@@ -2,6 +2,7 @@ import { apigateway } from "@pulumi/awsx";
 import { DynamoDB } from 'aws-sdk';
 import * as AWSXray from 'aws-xray-sdk'
 
+export const toAttributeValue = DynamoDB.Converter.input;
 export const marshall = DynamoDB.Converter.marshall;
 export const unmarshall = DynamoDB.Converter.unmarshall;
 
