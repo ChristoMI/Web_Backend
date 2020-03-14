@@ -28,6 +28,7 @@ export function testRouteGet() {
   const dynamo = createDynamo();
 
   return async (event: awsx.apigateway.Request) => {
+    console.log('Current event: ' + event);
     console.log('Current account: ' + event.requestContext.accountId);
 
     let id = '';
