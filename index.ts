@@ -32,7 +32,7 @@ const environment = {
 };
 
 function test() {
-  return async (event: awsx.apigateway.Request) => {
+  return async (event: object) => {
     console.log(event);
 
     return {
