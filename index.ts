@@ -215,6 +215,7 @@ let routes: Route[] = [{
     in: 'path',
     name: 'id',
   }],
+  authorizers: cognitoAuthorizerCustomers,
   eventHandler: new aws.lambda.CallbackFunction('createPropertyComment', {
     callbackFactory: commentsRoutes.createPropertyComment,
     reservedConcurrentExecutions: 1,
