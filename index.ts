@@ -36,7 +36,7 @@ const customersUserPool = new aws.cognito.UserPool('booking-user-pool-customers'
 });
 
 const googleAuthProvider = new aws.cognito.IdentityProvider('google-customers-provider', {
-  providerName: 'google-customers-provider',
+  providerName: 'Google',
   userPoolId: customersUserPool.id,
   providerType: 'Google',
   providerDetails: {
