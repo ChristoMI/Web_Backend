@@ -32,7 +32,7 @@ const environment = {
 };
 
 const customersUserPool = new aws.cognito.UserPool('booking-user-pool-customers', {
-  autoVerifiedAttributes: ['email'],
+  autoVerifiedAttributes: ['email']
 });
 
 const googleAuthProvider = new aws.cognito.IdentityProvider('google-customers-provider', {
@@ -47,7 +47,8 @@ const googleAuthProvider = new aws.cognito.IdentityProvider('google-customers-pr
   attributeMapping: {
     'given_name': 'given_name',
     'family_name': 'family_name',
-    'picture': 'picture'
+    'picture': 'picture',
+    'email': 'email'
   }
 })
 
