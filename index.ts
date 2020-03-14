@@ -18,6 +18,8 @@ import { staticBucket, staticDomain } from './infrastructure/staticContent';
 const stackConfig = new pulumi.Config('site');
 const domain = stackConfig.require('domain');
 const certArn = stackConfig.require('certificateArn');
+const googleClientId = stackConfig.require('googleClientId');
+const googleClientSecret = stackConfig.require('googleClientSecret');
 
 const variables = {
   [STATIC_BUCKET_ENV_KEY]: staticBucket,
@@ -32,6 +34,22 @@ const environment = {
 const customersUserPool = new aws.cognito.UserPool('booking-user-pool-customers', {
   autoVerifiedAttributes: ['email'],
 });
+
+const googleAuthProvider = new aws.cognito.IdentityProvider('google-customers-provider', {
+  providerName: 'google-customers-provider',
+  userPoolId: customersUserPool.id,
+  providerType: 'Google',
+  providerDetails: {
+    client_id: googleClientId,
+    client_secret: googleClientSecret,
+    authorize_scopes: 'profile email'
+  },
+  attributeMapping: {
+    'given_name': 'given_name',
+    'family_name': 'family_name',
+    'picture': 'picture'
+  }
+})
 
 const hostsUserPool = new aws.cognito.UserPool('booking-user-pool-hosts', {
   autoVerifiedAttributes: ['email'],
