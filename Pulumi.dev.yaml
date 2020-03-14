@@ -3,5 +3,9 @@ config:
   aws:region: eu-central-1
   site:certificateArn: arn:aws:acm:us-east-1:049059941555:certificate/b8a3b426-bf51-45d0-bfd1-2b28cff50416
   site:domain: api.booking.knine.xyz
+  site:googleClientId:
+    secure: AAABAOUTTsr6rGYwDeGtQVSSU5aHz07Pp8aGUX631laFb5Lebp3nnCsS96bsdPrphAz3mxozj6CtRUR3fMvKCoao/0VIxQiRyyh+JaCF9+RNrdgEkrDgyEGmdMwieesEZy3ASQdp/tI=
+  site:googleClientSecret:
+    secure: AAABAHL5Quo29l6amXnWU4csXPsmS7E6ZXSicFGMT+el/KKAmtm5fW6AXZmxs2TkZ8fYqSPEiB4=
   static:certificateArn: arn:aws:acm:us-east-1:049059941555:certificate/a2db74db-47ff-4ab1-ae72-e65c493f472f
   static:domain: static.booking.knine.xyz

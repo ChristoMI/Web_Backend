@@ -19,7 +19,7 @@ export class PropertyImageService {
         await this.s3.putObject({
             Bucket: this.bucketName,
             Key: key,
-            Body: new Buffer(imageContentBase64, 'base64'),
+            Body: Buffer.from(imageContentBase64, 'base64'),
             ACL: 'public-read'
         }).promise()
 
