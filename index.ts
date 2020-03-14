@@ -31,8 +31,29 @@ const environment = {
   variables,
 };
 
+function test() {
+  return async (event: awsx.apigateway.Request) => {
+    console.log(event);
+
+    return {
+      statusCode: 200
+    };
+  };
+}
+
+const testLambda = new aws.lambda.CallbackFunction('test', {
+  callbackFactory: test,
+  reservedConcurrentExecutions: 1,
+  tracingConfig: {
+    mode: 'Active',
+  },
+});
+
 const customersUserPool = new aws.cognito.UserPool('booking-user-pool-customers', {
-  autoVerifiedAttributes: ['email']
+  autoVerifiedAttributes: ['email'],
+  lambdaConfig: {
+    postConfirmation: testLambda.arn,
+  },
 });
 
 const googleAuthProvider = new aws.cognito.IdentityProvider('google-customers-provider', {
