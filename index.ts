@@ -48,6 +48,13 @@ const customersUserPool = new aws.cognito.UserPool('booking-user-pool-customers'
   },
 });
 
+const customerPostConfirmPermission = new aws.lambda.Permission('customerPostConfirmPermission', {
+  action: 'lambda:InvokeFunction',
+  function: customerPostConfirmationLambda,
+  principal: 'cognito-idp.amazonaws.com',
+  sourceArn: customersUserPool.arn
+});
+
 const googleAuthProvider = new aws.cognito.IdentityProvider('google-customers-provider', {
   providerName: 'Google',
   userPoolId: customersUserPool.id,
@@ -78,6 +85,13 @@ const hostsUserPool = new aws.cognito.UserPool('booking-user-pool-hosts', {
   lambdaConfig: {
     postConfirmation: hostPostConfirmationLambda.arn,
   },
+});
+
+const hostPostConfirmPermission = new aws.lambda.Permission('hostPostConfirmPermission', {
+  action: 'lambda:InvokeFunction',
+  function: hostPostConfirmationLambda,
+  principal: 'cognito-idp.amazonaws.com',
+  sourceArn: hostsUserPool.arn
 });
 
 const customersUserPoolClient = new aws.cognito.UserPoolClient('booking-user-pool-client-customers', {
