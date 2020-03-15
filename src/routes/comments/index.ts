@@ -65,6 +65,20 @@ async function hasProperty(dynamo: DynamoDB, propertyId: string): Promise<boolea
   return !!data.Item;
 }
 
+async function getCustomerProfiles(dynamo: DynamoDB, ids: string[]) {
+  return dynamo.batchGetItem({
+    RequestItems: {
+      "customer-profiles": {
+        Keys: ids.map(id => ({
+          id: {
+            S: id
+          }
+        }))
+      }
+    }
+  }).promise()
+}
+
 export function getCommentsByPropertyId() {
   const dynamo = createDynamo();
 
@@ -103,7 +117,7 @@ export function createPropertyComment() {
   const analysisService = new AnalysisService(process.env.AnalysisServerUrl!);
 
   const handler = async (event: awsx.apigateway.Request) => {
-    const authorId = uuidv4(); // FIXME: change id
+    const authorId = event.requestContext.authorizer!.sub
     const propertyId = event.pathParameters!.id;
     const body = parseBody(event);
 
@@ -116,17 +130,12 @@ export function createPropertyComment() {
     }
 
     const mood = await analysisService.getCommentMood(body.text);
-
+    
     const comment = marshall({
       id: uuidv4(),
       text: body.text,
       propertyId,
-      author: {
-        id: authorId,
-        firstName: 'FirstName',
-        lastName: 'LastName',
-        avatarUrl: null,
-      },
+      authorId,
       mood: {
         neg: mood.neg,
         neu: mood.neu,
