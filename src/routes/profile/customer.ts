@@ -10,7 +10,7 @@ function toResponse(entry: DynamoDB.AttributeMap) {
     email: entry.email.S,
     firstName: entry.firstName.S,
     lastName: entry.lastName.S,
-    avatarUrl: entry.avatarUrl.S,
+    avatarUrl: entry.avatarUrl && entry.avatarUrl.S,
     createdAt: entry.createdAt.S,
     updatedAt: entry.updatedAt.S,
   };
