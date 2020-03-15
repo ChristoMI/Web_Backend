@@ -1,9 +1,6 @@
-/* eslint-disable no-unused-vars */
-
 import * as awsx from '@pulumi/awsx';
-import { v4 as uuidv4 } from 'uuid';
 import { DynamoDB } from 'aws-sdk';
-import { parseBody, toAttributeValue, marshall, buildApiResponse, add500Handler } from '$src/apiGatewayUtilities';
+import { parseBody, marshall, buildApiResponse, add500Handler } from '$src/apiGatewayUtilities';
 import { createDynamo } from '$src/initAWS';
 
 function toResponse(entry: DynamoDB.AttributeMap) {
@@ -13,7 +10,7 @@ function toResponse(entry: DynamoDB.AttributeMap) {
     email: entry.email.S,
     firstName: entry.firstName.S,
     lastName: entry.lastName.S,
-    // avatarUrl:
+    avatarUrl: entry.avatarUrl.S,
     createdAt: entry.createdAt.S,
     updatedAt: entry.updatedAt.S,
   };
@@ -22,36 +19,36 @@ function toResponse(entry: DynamoDB.AttributeMap) {
 export function createCustomerProfile() {
   const dynamo = createDynamo();
 
-  const handler = async (event: awsx.apigateway.Request) => {
-    // console.log(event.request.userAttributes);
+  return async (event: any, context: any, callback: any) => {
+    const user = event.request.userAttributes;
 
-    const customer = marshall({
-      id: uuidv4(),
-      // username:
-      // email:
-      // firstName:
-      // lastName:
-      // avatarUrl:
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
+    try {
+      await dynamo.putItem({
+        TableName: 'customer',
+        Item: marshall({
+          id: user.sub,
+          username: event.userName,
+          email: user.email,
+          firstName: user.given_name,
+          lastName: user.family_name,
+          avatarUrl: user.picture,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }),
+      }).promise();
 
-    await dynamo.putItem({
-      TableName: 'customer',
-      Item: customer,
-    }).promise();
-
-    return buildApiResponse(200, toResponse(customer));
+      callback(null, event);
+    } catch (e) {
+      callback(e, event);
+    }
   };
-
-  return add500Handler(handler);
 }
 
 export function getCustomerProfile() {
   const dynamo = createDynamo();
 
   const handler = async (event: awsx.apigateway.Request) => {
-    const customerId = uuidv4(); // FIXME: get customerId by token
+    const customerId = event.requestContext.authorizer!.claims.sub;
 
     const customer = await dynamo.getItem({
       TableName: 'customer',
@@ -74,30 +71,41 @@ export function updateCustomerProfile() {
   const dynamo = createDynamo();
 
   const handler = async (event: awsx.apigateway.Request) => {
-    const customerId = uuidv4(); // FIXME: get customerId by token
+    const customerId = event.requestContext.authorizer!.claims.sub;
 
     const body = parseBody(event);
 
-    // toAttributeValue(username) <=> { S: username }
+    const expressions = [];
+    const attributes: any = {};
 
-    // -username
-    // -email
+    if (body.firstName) {
+      expressions.push('firstName = :firstName');
+      attributes[':firstName'] = { S: body.firstName };
+    }
 
-    // firstName
-    // lastName
-    // avatarUrl
+    if (body.lastName) {
+      expressions.push('lastName = :lastName');
+      attributes[':lastName'] = { S: body.lastName };
+    }
 
-    // updatedAt: new Date().toISOString(),
+    if (body.avatar) {
+      // TODO: ?
+    }
+
+    if (expressions.length) {
+      expressions.push('updatedAt = :updatedAt');
+      attributes[':updatedAt'] = { S: new Date().toISOString() };
+    } else {
+      return buildApiResponse(400, { message: 'No fields for updating' });
+    }
 
     const customer = await dynamo.updateItem({
       TableName: 'customer',
       Key: {
         id: { S: customerId },
       },
-      UpdateExpression: 'SET ', // TODO
-      ExpressionAttributeValues: { // TODO
-        // ':' {  },
-      },
+      UpdateExpression: `set ${expressions.join(', ')}`,
+      ExpressionAttributeValues: attributes,
       ReturnValues: 'ALL_NEW',
     }).promise();
 

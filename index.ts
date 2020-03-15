@@ -10,7 +10,7 @@ import {
   propertyInsert, propertyUpdate, propertyGetById, propertiesGet, STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY,
 } from './src/routes/propertiesRoute';
 import * as commentsRoutes from '$src/routes/comments';
-// import * as profileRoutes from '$src/routes/profile';
+import * as profileRoutes from '$src/routes/profile';
 
 import './infrastructure/dynamodb';
 import { staticBucket, staticDomain } from './infrastructure/staticContent';
@@ -32,31 +32,8 @@ const environment = {
   variables,
 };
 
-// const customerPostConfirmationLambda = new aws.lambda.CallbackFunction('createCustomerProfile', {
-//   callbackFactory: profileRoutes.createCustomerProfile,
-//   reservedConcurrentExecutions: 1,
-//   tracingConfig: {
-//     mode: 'Active',
-//   },
-// });
-
-// const customersUserPool = new aws.cognito.UserPool('booking-user-pool-customers', {
-//   autoVerifiedAttributes: ['email'],
-//   lambdaConfig: {
-//     postConfirmation: customerPostConfirmationLambda.arn,
-//   },
-// });
-
-function test() {
-  return async (event: object, context: any, callback: any) => {
-    console.log(event);
-
-    callback(null, event);
-  };
-}
-
-const testLambda = new aws.lambda.CallbackFunction('test', {
-  callbackFactory: test,
+const customerPostConfirmationLambda = new aws.lambda.CallbackFunction('createCustomerProfile', {
+  callbackFactory: profileRoutes.createCustomerProfile,
   reservedConcurrentExecutions: 1,
   tracingConfig: {
     mode: 'Active',
@@ -66,7 +43,7 @@ const testLambda = new aws.lambda.CallbackFunction('test', {
 const customersUserPool = new aws.cognito.UserPool('booking-user-pool-customers', {
   autoVerifiedAttributes: ['email'],
   lambdaConfig: {
-    postConfirmation: testLambda.arn,
+    postConfirmation: customerPostConfirmationLambda.arn,
   },
 });
 
@@ -154,30 +131,32 @@ let routes: Route[] = [{
     },
   }),
 },
-// {
-//   path: '/customers/profile',
-//   method: 'GET',
-//   eventHandler: new aws.lambda.CallbackFunction('getCustomerProfile', {
-//     callbackFactory: profileRoutes.getCustomerProfile,
-//     reservedConcurrentExecutions: 1,
-//     tracingConfig: {
-//       mode: 'Active',
-//     },
-//     environment,
-//   }),
-// },
-// {
-//   path: '/customers/profile',
-//   method: 'PUT',
-//   eventHandler: new aws.lambda.CallbackFunction('updateCustomerProfile', {
-//     callbackFactory: profileRoutes.updateCustomerProfile,
-//     reservedConcurrentExecutions: 1,
-//     tracingConfig: {
-//       mode: 'Active',
-//     },
-//     environment,
-//   }),
-// },
+{
+  path: '/customers/profile',
+  method: 'GET',
+  authorizers: cognitoAuthorizerCustomers,
+  eventHandler: new aws.lambda.CallbackFunction('getCustomerProfile', {
+    callbackFactory: profileRoutes.getCustomerProfile,
+    reservedConcurrentExecutions: 1,
+    tracingConfig: {
+      mode: 'Active',
+    },
+    environment,
+  }),
+},
+{
+  path: '/customers/profile',
+  method: 'PUT',
+  authorizers: cognitoAuthorizerCustomers,
+  eventHandler: new aws.lambda.CallbackFunction('updateCustomerProfile', {
+    callbackFactory: profileRoutes.updateCustomerProfile,
+    reservedConcurrentExecutions: 1,
+    tracingConfig: {
+      mode: 'Active',
+    },
+    environment,
+  }),
+},
 {
   path: '/properties',
   method: 'GET',
