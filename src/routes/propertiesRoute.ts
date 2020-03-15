@@ -2,11 +2,9 @@ import * as awsx from '@pulumi/awsx';
 import * as uuid from 'uuid';
 import { DynamoDB } from 'aws-sdk';
 import { createDynamo, createS3 } from '../initAWS';
-import { PropertyImageService, imageUrlFormatter } from '../propertyImageService';
+import { ImageService, imageUrlFormatter } from '../propertyImageService';
 import { parseBody, buildApiResponse, add500Handler } from '$src/apiGatewayUtilities';
-
-export const STATIC_BUCKET_ENV_KEY = 'staticbucket';
-export const STATIC_DOMAIN_ENV_KEY = 'staticdomain';
+import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from './settings';
 
 function toResponse(dynamodbEntry: DynamoDB.AttributeMap, toUrl: (key: string) => string) {
   return {
@@ -34,7 +32,7 @@ export function propertyInsert() {
     throw new Error('Configuration was not provided');
   }
 
-  const uploader = new PropertyImageService(s3, staticBucket);
+  const uploader = new ImageService(s3, staticBucket, 'covers');
 
   const handler = async (event: awsx.apigateway.Request) => {
     const newId = uuid();
@@ -43,7 +41,7 @@ export function propertyInsert() {
 
     let imageKey: string | undefined;
     if (body.cover_image_base64 && body.cover_image_file_name) {
-      imageKey = await uploader.uploadCoverImage(newId, body.cover_image_base64, body.cover_image_file_name);
+      imageKey = await uploader.uploadImage(newId, body.cover_image_base64, body.cover_image_file_name);
     }
 
     const dynamodbItem: DynamoDB.AttributeMap = {
@@ -84,7 +82,7 @@ export function propertyUpdate() {
     throw new Error('Configuration was not provided');
   }
 
-  const uploader = new PropertyImageService(s3, staticBucket);
+  const uploader = new ImageService(s3, staticBucket, 'covers');
 
   const handler = async (event: awsx.apigateway.Request) => {
     const id = event.pathParameters ? event.pathParameters.id : '';
@@ -101,7 +99,7 @@ export function propertyUpdate() {
 
     let imageKey: string | undefined = (search.Item.cover_image_key && search.Item.cover_image_key.S) || undefined;
     if (body.cover_image_base64 && body.cover_image_file_name) {
-      imageKey = await uploader.uploadCoverImage(id, body.cover_image_base64, body.cover_image_file_name);
+      imageKey = await uploader.uploadImage(id, body.cover_image_base64, body.cover_image_file_name);
     }
 
     const dynamodbItem: DynamoDB.AttributeMap = {

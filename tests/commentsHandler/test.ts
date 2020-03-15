@@ -6,7 +6,7 @@ import sinon = require('sinon');
 import { expect } from 'chai';
 import { createRequestFromBlueprint } from '../testApiGatewayRequest';
 import * as commentsRoutes from '$src/routes/comments';
-import { propertyInsert, STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '$src/routes/propertiesRoute';
+import { propertyInsert } from '$src/routes/propertiesRoute';
 import AnalysisService from '$src/services/AnalysisService';
 import { getMoodType } from '$src/routes/comments/moodTypeConversion';
 
@@ -16,6 +16,7 @@ import stubs = require('../profileHandler/stubs');
 
 
 import '../configTestEnvironment';
+import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '$src/routes/settings';
 
 describe('comments', () => {
   before(async () => {
