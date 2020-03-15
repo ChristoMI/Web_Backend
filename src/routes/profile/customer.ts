@@ -3,7 +3,7 @@ import { DynamoDB } from 'aws-sdk';
 import { getUserId, parseBody, marshall, buildApiResponse, add500Handler } from '$src/apiGatewayUtilities';
 import { createDynamo } from '$src/initAWS';
 
-const tableName = 'customer-profiles';
+const tableName = 'customer';
 
 function toResponse(entry: DynamoDB.AttributeMap) {
   return {

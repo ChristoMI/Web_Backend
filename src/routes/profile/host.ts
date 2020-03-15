@@ -16,7 +16,7 @@ function toResponse(entry: DynamoDB.AttributeMap) {
   };
 }
 
-const tableName = 'host-profiles';
+const tableName = 'host';
 
 export function createProfile() {
   const dynamo = createDynamo();

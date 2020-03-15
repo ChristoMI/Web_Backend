@@ -10,10 +10,15 @@ import { propertyInsert, STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '$s
 import AnalysisService from '$src/services/AnalysisService';
 import { getMoodType } from '$src/routes/comments/moodTypeConversion';
 
+import customerRoutes = require('$src/routes/profile/customer');
+import stubs = require('../profileHandler/stubs');
+
+
+
 import '../configTestEnvironment';
 
 describe('comments', () => {
-  before(() => {
+  before(async () => {
     process.env[STATIC_BUCKET_ENV_KEY] = 'testbucket';
     process.env[STATIC_DOMAIN_ENV_KEY] = 'someweirdsite.weirddomain.weird';
 
@@ -24,7 +29,19 @@ describe('comments', () => {
         pos: 0,
         compound: 0,
       }));
+
+      await customerRoutes.createProfile()(stubs.customerPostConfirmationEvent, {}, () => {});
   });
+
+  function createComment(propertyId: string, text: string) {
+    const request = createRequestFromBlueprint({
+      text: text,
+    }, {
+      id: propertyId,
+    }, stubs.customer.id);
+
+    return commentsRoutes.createPropertyComment()(request);
+  }
 
   it('should return positive mood', () => {
     expect(getMoodType(0.05)).to.equal('positive');
@@ -42,13 +59,7 @@ describe('comments', () => {
   });
 
   it('should return 404 error on create', async () => {
-    const request = createRequestFromBlueprint({
-      text: 'Horrible hotel, never will stay here again',
-    }, {
-      id: '9623d2a9-2605-4fbe-82dc-40b5197a1566',
-    });
-
-    const result = await commentsRoutes.createPropertyComment()(request);
+    const result = await createComment('9623d2a9-2605-4fbe-82dc-40b5197a1566', 'Horrible hotel, never will stay here again');
 
     expect(result.statusCode).to.be.equal(404);
   });
@@ -63,13 +74,7 @@ describe('comments', () => {
 
     const text = 'Horrible hotel, never will stay here again';
 
-    const request = createRequestFromBlueprint({
-      text,
-    }, {
-      id: propertyId,
-    });
-
-    const result = await commentsRoutes.createPropertyComment()(request);
+    const result = await createComment(propertyId, text);
     const comment = JSON.parse(result.body);
 
     expect(result.statusCode).to.be.equal(200);
@@ -78,9 +83,10 @@ describe('comments', () => {
     expect(comment.text).to.be.equal(text);
     expect(comment.propertyId).to.be.equal(propertyId);
     expect(comment.author).to.not.be.empty;
-    expect(comment.author.id).to.not.be.empty;
-    expect(comment.author.firstName).to.not.be.empty;
-    expect(comment.author.lastName).to.not.be.empty;
+    expect(comment.author.id).to.be.equal(stubs.customer.id);
+    expect(comment.author.firstName).to.be.equal(stubs.customer.firstName);
+    expect(comment.author.lastName).to.be.equal(stubs.customer.lastName);
+    expect(comment.author.avatarUrl).to.be.equal(stubs.customer.avatarUrl);
     expect(comment.moodType).to.be.equal('neutral');
     expect(comment.createdDate).to.not.be.empty;
   });
@@ -105,13 +111,7 @@ describe('comments', () => {
 
     const propertyId = JSON.parse(data1.body).id;
 
-    const request2 = createRequestFromBlueprint({
-      text: 'Horrible hotel, never will stay here again',
-    }, {
-      id: propertyId,
-    });
-
-    await commentsRoutes.createPropertyComment()(request2);
+    await createComment(propertyId, 'Horrible hotel, never will stay here again');;
 
     const request3 = createRequestFromBlueprint({}, {
       id: propertyId,

@@ -25,8 +25,6 @@ export function testRouteGet() {
   const dynamo = createDynamo();
 
   return async (event: awsx.apigateway.Request) => {
-    console.log(event.requestContext);
-
     let id = '';
     if (event.pathParameters) {
       id = event.pathParameters.id || '';
