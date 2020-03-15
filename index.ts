@@ -78,18 +78,18 @@ const hostsUserPool = new aws.cognito.UserPool('booking-user-pool-hosts', {
 const customersUserPoolClient = new aws.cognito.UserPoolClient('booking-user-pool-client-customers', {
   allowedOauthFlows: ['code', 'implicit'],
   allowedOauthFlowsUserPoolClient: true,
-  allowedOauthScopes: ['phone', 'email', 'openid'],
-  callbackUrls: ['http://localhost:3000', 'https://landing.booking.knine.xyz/swagger'],
+  allowedOauthScopes: ['phone', 'email', 'openid', 'profile'],
+  callbackUrls: ['http://localhost:3000', 'https://landing.booking.knine.xyz/swagger/oauth2-redirect.html'],
   generateSecret: false,
   supportedIdentityProviders: ['COGNITO', 'Google'],
   userPoolId: customersUserPool.id,
 });
 
 const hostsUserPoolClient = new aws.cognito.UserPoolClient('booking-user-pool-client-hosts', {
-  allowedOauthFlows: ['code'],
+  allowedOauthFlows: ['code', 'implicit'],
   allowedOauthFlowsUserPoolClient: true,
-  allowedOauthScopes: ['phone', 'email', 'openid'],
-  callbackUrls: ['http://localhost:3000'],
+  allowedOauthScopes: ['phone', 'email', 'openid', 'profile'],
+  callbackUrls: ['http://localhost:3000', 'https://landing.booking.knine.xyz/swagger/oauth2-redirect.html'],
   generateSecret: false,
   supportedIdentityProviders: ['COGNITO'],
   userPoolId: hostsUserPool.id,
@@ -215,6 +215,7 @@ let routes: Route[] = [{
     in: 'path',
     name: 'id',
   }],
+  authorizers: cognitoAuthorizerCustomers,
   eventHandler: new aws.lambda.CallbackFunction('createPropertyComment', {
     callbackFactory: commentsRoutes.createPropertyComment,
     reservedConcurrentExecutions: 1,
