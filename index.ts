@@ -48,12 +48,10 @@ const environment = {
 // });
 
 function test() {
-  return async (event: object) => {
+  return async (event: object, context: any, callback: any) => {
     console.log(event);
 
-    return {
-      statusCode: 200
-    };
+    callback(null, event);
   };
 }
 
