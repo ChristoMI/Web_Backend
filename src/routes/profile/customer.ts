@@ -93,27 +93,29 @@ export function updateProfile() {
     }
 
     if (expressions.length) {
+      attributes[':id'] = { S: customerId };
       expressions.push('updatedAt = :updatedAt');
       attributes[':updatedAt'] = { S: new Date().toISOString() };
     } else {
       return buildApiResponse(400, { message: 'No fields for updating' });
     }
 
-    const customer = await dynamo.updateItem({
-      TableName: 'customer',
-      Key: {
-        id: { S: customerId },
-      },
-      UpdateExpression: `set ${expressions.join(', ')}`,
-      ExpressionAttributeValues: attributes,
-      ReturnValues: 'ALL_NEW',
-    }).promise();
+    try {
+      const customer = await dynamo.updateItem({
+        TableName: 'customer',
+        Key: {
+          id: { S: customerId },
+        },
+        ConditionExpression: 'id = :id',
+        UpdateExpression: `set ${expressions.join(', ')}`,
+        ExpressionAttributeValues: attributes,
+        ReturnValues: 'ALL_NEW',
+      }).promise();
 
-    if (!customer.Attributes) {
+      return buildApiResponse(200, toResponse(customer.Attributes!));
+    } catch (e) {
       return buildApiResponse(404, { message: 'Customer not found' });
     }
-
-    return buildApiResponse(200, toResponse(customer.Attributes));
   };
 
   return add500Handler(handler);

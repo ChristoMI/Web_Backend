@@ -93,27 +93,29 @@ export function updateProfile() {
     }
 
     if (expressions.length) {
+      attributes[':id'] = { S: hostId };
       expressions.push('updatedAt = :updatedAt');
       attributes[':updatedAt'] = { S: new Date().toISOString() };
     } else {
       return buildApiResponse(400, { message: 'No fields for updating' });
     }
 
-    const host = await dynamo.updateItem({
-      TableName: 'host',
-      Key: {
-        id: { S: hostId },
-      },
-      UpdateExpression: `set ${expressions.join(', ')}`,
-      ExpressionAttributeValues: attributes,
-      ReturnValues: 'ALL_NEW',
-    }).promise();
+    try {
+      const host = await dynamo.updateItem({
+        TableName: 'host',
+        Key: {
+          id: { S: hostId },
+        },
+        ConditionExpression: 'id = :id',
+        UpdateExpression: `set ${expressions.join(', ')}`,
+        ExpressionAttributeValues: attributes,
+        ReturnValues: 'ALL_NEW',
+      }).promise();
 
-    if (!host.Attributes) {
+      return buildApiResponse(200, toResponse(host.Attributes!));
+    } catch (e) {
       return buildApiResponse(404, { message: 'Host not found' });
     }
-
-    return buildApiResponse(200, toResponse(host.Attributes));
   };
 
   return add500Handler(handler);
