@@ -104,6 +104,9 @@ export function getCommentsByPropertyId() {
 
     const comments = await query(dynamo, params)
       .then(sortByDate('createdDate'));
+    
+    const authorIds = comments.map(c => c.authorId).filter(c => c)
+    const authors = getCustomerProfiles(dynamo, .dis)
 
     return buildApiResponse(200, toArrayResponse(comments));
   };
