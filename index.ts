@@ -260,7 +260,17 @@ const api = new awsx.apigateway.API('booking-api', {
   routes,
   stageArgs: {
     xrayTracingEnabled: true,
+  }
+});
+
+const unauthorizedResponseWithCors = new aws.apigateway.Response("unauthorizedResponseWithCors", {
+  responseParameters: {
+      'gatewayresponse.header.Access-Control-Allow-Origin': '*',
+      'gatewayresponse.header.Access-Control-Allow-Credentials': "true"
   },
+  responseType: "UNAUTHORIZED",
+  restApiId: api.restAPI.id,
+  statusCode: "401",
 });
 
 const domainName = new aws.apigateway.DomainName('booking-domain', {
