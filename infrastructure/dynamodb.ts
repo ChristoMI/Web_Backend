@@ -47,7 +47,7 @@ export const comment = new aws.dynamodb.Table('comment', {
   writeCapacity: 1,
 });
 
-export const customer = new aws.dynamodb.Table('customer', {
+export const customer = new aws.dynamodb.Table('customer-profiles', {
   name: 'customer',
   hashKey: 'id',
   attributes: [{
@@ -58,7 +58,7 @@ export const customer = new aws.dynamodb.Table('customer', {
   writeCapacity: 1,
 });
 
-export const host = new aws.dynamodb.Table('host', {
+export const host = new aws.dynamodb.Table('host-profiles', {
   name: 'host',
   hashKey: 'id',
   attributes: [{

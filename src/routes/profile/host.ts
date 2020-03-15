@@ -16,6 +16,8 @@ function toResponse(entry: DynamoDB.AttributeMap) {
   };
 }
 
+const tableName = 'host-profiles';
+
 export function createProfile() {
   const dynamo = createDynamo();
 
@@ -24,7 +26,7 @@ export function createProfile() {
 
     try {
       await dynamo.putItem({
-        TableName: 'host',
+        TableName: tableName,
         Item: marshall({
           id: user.sub,
           username: event.userName,
@@ -51,7 +53,7 @@ export function getProfile() {
     const hostId = getUserId(event);
 
     const host = await dynamo.getItem({
-      TableName: 'host',
+      TableName: tableName,
       Key: {
         id: { S: hostId },
       },
@@ -102,7 +104,7 @@ export function updateProfile() {
 
     try {
       const host = await dynamo.updateItem({
-        TableName: 'host',
+        TableName: tableName,
         Key: {
           id: { S: hostId },
         },
