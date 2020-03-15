@@ -58,13 +58,13 @@ export const customer = new aws.dynamodb.Table('customer', {
   writeCapacity: 1,
 });
 
-// export const host = new aws.dynamodb.Table('host', {
-//   name: 'customer',
-//   hashKey: 'id',
-//   attributes: [{
-//     name: 'id',
-//     type: 'S',
-//   }],
-//   readCapacity: 1,
-//   writeCapacity: 1,
-// });
+export const host = new aws.dynamodb.Table('host', {
+  name: 'host',
+  hashKey: 'id',
+  attributes: [{
+    name: 'id',
+    type: 'S',
+  }],
+  readCapacity: 1,
+  writeCapacity: 1,
+});

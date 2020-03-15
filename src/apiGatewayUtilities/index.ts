@@ -1,9 +1,14 @@
-import { apigateway } from "@pulumi/awsx";
+import { apigateway } from '@pulumi/awsx';
 import { DynamoDB } from 'aws-sdk';
 import * as AWSXray from 'aws-xray-sdk'
 
 export const marshall = DynamoDB.Converter.marshall;
 export const unmarshall = DynamoDB.Converter.unmarshall;
+
+
+export function getUserId(event: apigateway.Request) {
+  return event.requestContext.authorizer!.claims.sub;
+}
 
 export function parseBody(event: apigateway.Request): { [key: string]: any } {
   const body = event.body || '{}';
