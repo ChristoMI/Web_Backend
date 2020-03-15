@@ -100,7 +100,6 @@ export function updateProfile() {
 
     if (body.avatarBase64 && body.avatarFileName) {
       const key = await imageService.uploadImage(hostId, body.avatarBase64, body.avatarFileName);
-      console.log(key)
       expressions.push('avatarKey = :key');
       attributes[':key'] = { S: key };
     }
