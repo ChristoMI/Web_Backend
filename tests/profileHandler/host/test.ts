@@ -49,6 +49,8 @@ describe('profile:host', () => {
       body: {
         firstName: newFirstName,
         lastName: newLastName,
+        avatarBase64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+        avatarFileName: 'image.png'
       },
     });
 
@@ -63,6 +65,9 @@ describe('profile:host', () => {
     expect(profile.email).to.be.equal(stubs.host.email);
     expect(profile.firstName).to.be.equal(newFirstName);
     expect(profile.lastName).to.be.equal(newLastName);
+    expect(profile.avatarUrl).to.not.be.empty;
+    expect(profile.avatarUrl).to.contain('image.png');
+    expect(profile.avatarUrl).to.satisfy((s: string) => s.startsWith('https://'), result.body);
   });
 
   it('should return 404 error on update host profile', async () => {

@@ -3,18 +3,19 @@ import {join} from 'path'
 import {resolve} from 'url'
 import uuid = require('uuid')
 
-export class PropertyImageService {
-    private s3: S3
-    private bucketName: string
-    private readonly coverImagePrefix = 'covers'
+export class ImageService {
+    private s3: S3;
+    private bucketName: string;
+    private subfolder: string;
 
-    constructor(s3: S3, bucketName: string) {
-        this.s3 = s3
-        this.bucketName = bucketName
+    constructor(s3: S3, bucketName: string, subfolder: string) {
+        this.s3 = s3;
+        this.bucketName = bucketName;
+        this.subfolder = subfolder;
     }
 
-    async uploadCoverImage(propertyId: string, imageContentBase64: string, imageFilename: string) {
-        const key = join(this.coverImagePrefix, propertyId, uuid(), imageFilename)
+    async uploadImage(id: string, imageContentBase64: string, imageFilename: string) {
+        const key = join(this.subfolder, id, uuid(), imageFilename);
         
         await this.s3.putObject({
             Bucket: this.bucketName,

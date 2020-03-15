@@ -7,13 +7,14 @@ import { Route } from '@pulumi/awsx/apigateway/api';
 import { testRouteGet, testRouteCreate } from './src/routes/testRoute';
 
 import {
-  propertyInsert, propertyUpdate, propertyGetById, propertiesGet, STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY,
+  propertyInsert, propertyUpdate, propertyGetById, propertiesGet
 } from './src/routes/propertiesRoute';
 import * as commentsRoutes from '$src/routes/comments';
 import * as profileRoutes from '$src/routes/profile';
 
 import './infrastructure/dynamodb';
 import { staticBucket, staticDomain } from './infrastructure/staticContent';
+import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '$src/routes/settings';
 
 
 const stackConfig = new pulumi.Config('site');

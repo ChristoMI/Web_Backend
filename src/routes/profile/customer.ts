@@ -1,16 +1,21 @@
 import { apigateway } from '@pulumi/awsx';
 import { DynamoDB } from 'aws-sdk';
 import { getUserId, parseBody, marshall, buildApiResponse, add500Handler } from '$src/apiGatewayUtilities';
-import { createDynamo } from '$src/initAWS';
+import { createDynamo, createS3 } from '$src/initAWS';
+import { ImageService, imageUrlFormatter } from '$src/propertyImageService';
+import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '../settings';
 
-function toResponse(entry: DynamoDB.AttributeMap) {
+
+const tableName = 'customer';
+
+function toResponse(entry: DynamoDB.AttributeMap, staticDomain: string) {
   return {
     id: entry.id.S,
     username: entry.username.S,
     email: entry.email.S,
     firstName: entry.firstName.S,
     lastName: entry.lastName.S,
-    avatarUrl: entry.avatarUrl && entry.avatarUrl.S,
+    avatarUrl: entry.avatarKey && imageUrlFormatter(entry.avatarKey.S!, staticDomain) || entry.avatarUrl && entry.avatarUrl.S,
     createdAt: entry.createdAt.S,
     updatedAt: entry.updatedAt.S,
   };
@@ -24,7 +29,7 @@ export function createProfile() {
 
     try {
       await dynamo.putItem({
-        TableName: 'customer',
+        TableName: tableName,
         Item: marshall({
           id: user.sub,
           username: event.userName,
@@ -46,12 +51,13 @@ export function createProfile() {
 
 export function getProfile() {
   const dynamo = createDynamo();
+  const staticDomain = process.env[STATIC_DOMAIN_ENV_KEY]!;
 
   const handler = async (event: apigateway.Request) => {
     const customerId = getUserId(event);
 
     const customer = await dynamo.getItem({
-      TableName: 'customer',
+      TableName: tableName,
       Key: {
         id: { S: customerId },
       },
@@ -61,7 +67,7 @@ export function getProfile() {
       return buildApiResponse(404, { message: 'Customer not found' });
     }
 
-    return buildApiResponse(200, toResponse(customer.Item));
+    return buildApiResponse(200, toResponse(customer.Item, staticDomain));
   };
 
   return add500Handler(handler);
@@ -69,6 +75,11 @@ export function getProfile() {
 
 export function updateProfile() {
   const dynamo = createDynamo();
+  const s3 = createS3();
+  const staticBucket = process.env[STATIC_BUCKET_ENV_KEY]!;
+  const staticDomain = process.env[STATIC_DOMAIN_ENV_KEY]!;
+
+  const imageService = new ImageService(s3, staticBucket, 'customer-profiles');
 
   const handler = async (event: apigateway.Request) => {
     const customerId = getUserId(event);
@@ -88,8 +99,11 @@ export function updateProfile() {
       attributes[':lastName'] = { S: body.lastName };
     }
 
-    if (body.avatar) {
-      // TODO: ?
+    if (body.avatarBase64 && body.avatarFileName) {
+      const key = await imageService.uploadImage(customerId, body.avatarBase64, body.avatarFileName);
+      console.log(key)
+      expressions.push('avatarKey = :key');
+      attributes[':key'] = { S: key };
     }
 
     if (expressions.length) {
@@ -102,7 +116,7 @@ export function updateProfile() {
 
     try {
       const customer = await dynamo.updateItem({
-        TableName: 'customer',
+        TableName: tableName,
         Key: {
           id: { S: customerId },
         },
@@ -112,7 +126,7 @@ export function updateProfile() {
         ReturnValues: 'ALL_NEW',
       }).promise();
 
-      return buildApiResponse(200, toResponse(customer.Attributes!));
+      return buildApiResponse(200, toResponse(customer.Attributes!, staticDomain));
     } catch (e) {
       return buildApiResponse(404, { message: 'Customer not found' });
     }

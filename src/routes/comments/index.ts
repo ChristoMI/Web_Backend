@@ -9,24 +9,28 @@ import AnalysisService from '$src/services/AnalysisService';
 
 import { getMoodType } from './moodTypeConversion';
 
-function toResponse(entry: DynamoDB.AttributeMap) {
+function toResponse(entry: DynamoDB.AttributeMap, authors: Map<string, any>) {
+  const author = entry.authorId && entry.authorId.S && authors.has(entry.authorId.S) 
+    ? authors.get(entry.authorId.S)
+    : null;
+    
   return {
     id: entry.id.S,
     text: entry.text.S,
     propertyId: entry.propertyId.S,
-    author: {
-      id: entry.author.M!.id.S,
-      firstName: entry.author.M!.firstName.S,
-      lastName: entry.author.M!.lastName.S,
-      avatarUrl: entry.author.M!.avatarUrl.S || null,
+    author: author && {
+      id: author.id,
+      firstName: author.firstName,
+      lastName: author.lastName,
+      avatarUrl: author.avatarUrl,
     },
     moodType: getMoodType(+entry.mood.M!.compound.N!),
     createdDate: entry.createdDate.S,
   };
 }
 
-function toArrayResponse(items: DynamoDB.Types.ItemList) {
-  return items.map((item) => toResponse(item));
+function toArrayResponse(items: DynamoDB.Types.ItemList, authors: Map<string, any>) {
+  return items.map((item) => toResponse(item, authors));
 }
 
 async function query(
@@ -65,6 +69,30 @@ async function hasProperty(dynamo: DynamoDB, propertyId: string): Promise<boolea
   return !!data.Item;
 }
 
+async function getCustomerProfiles(dynamo: DynamoDB, ids: Set<string>): Promise<Map<string, any>> {
+  if(!ids.size)
+    return new Map<string, any>();
+
+  const profilesTable = "customer"
+  const items = await dynamo.batchGetItem({
+    RequestItems: {
+      [profilesTable]: {
+        Keys: Array.from(ids.values(), id => ({
+          id: {
+            S: id
+          }
+        }))
+      }
+    }
+  }).promise()
+
+  const responses = items.Responses;
+  if(!responses)
+    return new Map<string, any>();
+
+  return new Map(Array.from(responses[profilesTable], i => [i.id.S!, DynamoDB.Converter.unmarshall(i)]))
+}
+
 export function getCommentsByPropertyId() {
   const dynamo = createDynamo();
 
@@ -90,8 +118,12 @@ export function getCommentsByPropertyId() {
 
     const comments = await query(dynamo, params)
       .then(sortByDate('createdDate'));
+    
+    const authorIds = comments.map(c => c.authorId && c.authorId.S).filter(c => c)
+    const uniqueAuthorIds = new Set(authorIds) 
+    const authors = await getCustomerProfiles(dynamo, uniqueAuthorIds)
 
-    return buildApiResponse(200, toArrayResponse(comments));
+    return buildApiResponse(200, toArrayResponse(comments, authors));
   };
 
   return add500Handler(handler);
@@ -103,7 +135,7 @@ export function createPropertyComment() {
   const analysisService = new AnalysisService(process.env.AnalysisServerUrl!);
 
   const handler = async (event: awsx.apigateway.Request) => {
-    const authorId = uuidv4(); // FIXME: change id
+    const authorId = event.requestContext.authorizer!.sub
     const propertyId = event.pathParameters!.id;
     const body = parseBody(event);
 
@@ -116,17 +148,12 @@ export function createPropertyComment() {
     }
 
     const mood = await analysisService.getCommentMood(body.text);
-
+    
     const comment = marshall({
       id: uuidv4(),
       text: body.text,
       propertyId,
-      author: {
-        id: authorId,
-        firstName: 'FirstName',
-        lastName: 'LastName',
-        avatarUrl: null,
-      },
+      authorId,
       mood: {
         neg: mood.neg,
         neu: mood.neu,
@@ -140,8 +167,8 @@ export function createPropertyComment() {
       TableName: 'comment',
       Item: comment,
     }).promise();
-
-    return buildApiResponse(200, toResponse(comment));
+    const authors = await getCustomerProfiles(dynamo, new Set([authorId]));
+    return buildApiResponse(200, toResponse(comment, authors));
   };
 
   return add500Handler(handler)

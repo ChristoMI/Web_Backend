@@ -41,14 +41,19 @@ export function add500Handler(func: (event: apigateway.Request) => Promise<apiga
       return await func(e)
     }
     catch(error) {
-      const segment = AWSXray.getSegment()
-      if(segment) {
-        const subsegment = segment.addNewSubsegment('exception')
-        subsegment.addError(error)
-        subsegment.close()
+      console.error(error);
+      
+      try {
+        const segment = AWSXray.getSegment()
+        if(segment) {
+          const subsegment = segment.addNewSubsegment('exception')
+          subsegment.addError(error)
+          subsegment.close()
+        }
+      } catch(e) {
+        console.error(e)
       }
 
-      console.error(error);
       return buildApiResponse(500, error)
     }
   }
