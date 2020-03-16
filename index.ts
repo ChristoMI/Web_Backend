@@ -15,7 +15,7 @@ import * as profileRoutes from '$src/routes/profile';
 import './infrastructure/dynamodb';
 import { staticBucket, staticDomain } from './infrastructure/staticContent';
 import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '$src/routes/settings';
-import { defaultMemorySize, defaultConcurrentExecutions } from 'infrastructure/lambdaDefaults';
+import { defaultMemorySize, defaultConcurrentExecutions } from './infrastructure/lambdaDefaults';
 
 
 const stackConfig = new pulumi.Config('site');
