@@ -15,6 +15,7 @@ import * as profileRoutes from '$src/routes/profile';
 import './infrastructure/dynamodb';
 import { staticBucket, staticDomain } from './infrastructure/staticContent';
 import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '$src/routes/settings';
+import { defaultMemorySize, defaultConcurrentExecutions } from 'infrastructure/lambdaDefaults';
 
 
 const stackConfig = new pulumi.Config('site');
@@ -163,11 +164,12 @@ let routes: Route[] = [{
   authorizers: cognitoAuthorizerCustomers,
   eventHandler: new aws.lambda.CallbackFunction('getCustomerProfile', {
     callbackFactory: profileRoutes.customer.getProfile,
-    reservedConcurrentExecutions: 1,
+    reservedConcurrentExecutions: defaultConcurrentExecutions,
     tracingConfig: {
       mode: 'Active',
     },
     environment,
+    memorySize: defaultMemorySize
   }),
 },
 {
@@ -176,11 +178,12 @@ let routes: Route[] = [{
   authorizers: cognitoAuthorizerCustomers,
   eventHandler: new aws.lambda.CallbackFunction('updateCustomerProfile', {
     callbackFactory: profileRoutes.customer.updateProfile,
-    reservedConcurrentExecutions: 1,
+    reservedConcurrentExecutions: defaultConcurrentExecutions,
     tracingConfig: {
       mode: 'Active',
     },
     environment,
+    memorySize: defaultMemorySize
   }),
 },
 {
@@ -189,11 +192,12 @@ let routes: Route[] = [{
   authorizers: cognitoAuthorizerHosts,
   eventHandler: new aws.lambda.CallbackFunction('getHostProfile', {
     callbackFactory: profileRoutes.host.getProfile,
-    reservedConcurrentExecutions: 1,
+    reservedConcurrentExecutions: defaultConcurrentExecutions,
     tracingConfig: {
       mode: 'Active',
     },
     environment,
+    memorySize: defaultMemorySize
   }),
 },
 {
@@ -202,11 +206,12 @@ let routes: Route[] = [{
   authorizers: cognitoAuthorizerHosts,
   eventHandler: new aws.lambda.CallbackFunction('updateHostProfile', {
     callbackFactory: profileRoutes.host.updateProfile,
-    reservedConcurrentExecutions: 1,
+    reservedConcurrentExecutions: defaultConcurrentExecutions,
     tracingConfig: {
       mode: 'Active',
     },
     environment,
+    memorySize: defaultMemorySize
   }),
 },
 {
@@ -214,11 +219,12 @@ let routes: Route[] = [{
   method: 'GET',
   eventHandler: new aws.lambda.CallbackFunction('propertiesGet', {
     callbackFactory: propertiesGet,
-    reservedConcurrentExecutions: 1,
+    reservedConcurrentExecutions: defaultConcurrentExecutions,
     tracingConfig: {
       mode: 'Active',
     },
     environment,
+    memorySize: defaultMemorySize
   }),
 },
 {
@@ -229,11 +235,12 @@ let routes: Route[] = [{
   ],
   eventHandler: new aws.lambda.CallbackFunction('propertyGetById', {
     callbackFactory: propertyGetById,
-    reservedConcurrentExecutions: 1,
+    reservedConcurrentExecutions: defaultConcurrentExecutions,
     tracingConfig: {
       mode: 'Active',
     },
     environment,
+    memorySize: defaultMemorySize
   }),
 },
 {
@@ -242,11 +249,12 @@ let routes: Route[] = [{
   authorizers: cognitoAuthorizerHosts,
   eventHandler: new aws.lambda.CallbackFunction('propertyInsert', {
     callbackFactory: propertyInsert,
-    reservedConcurrentExecutions: 1,
+    reservedConcurrentExecutions: defaultConcurrentExecutions,
     tracingConfig: {
       mode: 'Active',
     },
     environment,
+    memorySize: defaultMemorySize
   }),
 },
 {
@@ -258,11 +266,12 @@ let routes: Route[] = [{
   ],
   eventHandler: new aws.lambda.CallbackFunction('propertyUpdate', {
     callbackFactory: propertyUpdate,
-    reservedConcurrentExecutions: 1,
+    reservedConcurrentExecutions: defaultConcurrentExecutions,
     tracingConfig: {
       mode: 'Active',
     },
     environment,
+    memorySize: defaultMemorySize
   }),
 },
 {
@@ -274,11 +283,12 @@ let routes: Route[] = [{
   }],
   eventHandler: new aws.lambda.CallbackFunction('getCommentsByPropertyId', {
     callbackFactory: commentsRoutes.getCommentsByPropertyId,
-    reservedConcurrentExecutions: 1,
+    reservedConcurrentExecutions: defaultConcurrentExecutions,
     tracingConfig: {
       mode: 'Active',
     },
     environment,
+    memorySize: defaultMemorySize
   }),
 },
 {
@@ -291,11 +301,12 @@ let routes: Route[] = [{
   authorizers: cognitoAuthorizerCustomers,
   eventHandler: new aws.lambda.CallbackFunction('createPropertyComment', {
     callbackFactory: commentsRoutes.createPropertyComment,
-    reservedConcurrentExecutions: 1,
+    reservedConcurrentExecutions: defaultConcurrentExecutions,
     tracingConfig: {
       mode: 'Active',
     },
     environment,
+    memorySize: defaultMemorySize
   }),
 },
 ];
@@ -311,7 +322,7 @@ function addCors(routes: Route[]) {
         'Access-Control-Allow-Methods': '*',
       },
     }),
-    reservedConcurrentExecutions: 1,
+    reservedConcurrentExecutions: 5,
   });
 
   const newRoutes = Array.from(routes);
