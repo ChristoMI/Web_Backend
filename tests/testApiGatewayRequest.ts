@@ -31,7 +31,9 @@ const template = () => ({
           userArn: null,
       },
       authorizer: {
-        sub: ''
+        claims: {
+          sub: ''
+        }
       },
       path: 'string',
       stage: 'string',
@@ -48,6 +50,6 @@ export function createRequestFromBlueprint(body: object, pathParams = {}, sub = 
     let instance = template()
     instance.body = JSON.stringify(body)
     instance.pathParameters = pathParams
-    instance.requestContext.authorizer.sub = sub;
+    instance.requestContext.authorizer.claims.sub = sub;
     return instance
 }

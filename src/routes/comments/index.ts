@@ -3,7 +3,7 @@
 import * as awsx from '@pulumi/awsx';
 import { v4 as uuidv4 } from 'uuid';
 import { DynamoDB } from 'aws-sdk';
-import { marshall, parseBody, buildApiResponse, add500Handler } from '$src/apiGatewayUtilities';
+import { marshall, parseBody, buildApiResponse, add500Handler, getUserId } from '$src/apiGatewayUtilities';
 import { createDynamo } from '$src/initAWS';
 import AnalysisService from '$src/services/AnalysisService';
 
@@ -135,7 +135,7 @@ export function createPropertyComment() {
   const analysisService = new AnalysisService(process.env.AnalysisServerUrl!);
 
   const handler = async (event: awsx.apigateway.Request) => {
-    const authorId = event.requestContext.authorizer!.sub
+    const authorId = getUserId(event);
     const propertyId = event.pathParameters!.id;
     const body = parseBody(event);
 
