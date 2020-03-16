@@ -239,6 +239,7 @@ let routes: Route[] = [{
 {
   path: '/properties',
   method: 'POST',
+  authorizers: cognitoAuthorizerHosts,
   eventHandler: new aws.lambda.CallbackFunction('propertyInsert', {
     callbackFactory: propertyInsert,
     reservedConcurrentExecutions: 1,
@@ -251,6 +252,7 @@ let routes: Route[] = [{
 {
   path: '/properties/{id}',
   method: 'PUT',
+  authorizers: cognitoAuthorizerHosts,
   requiredParameters: [
     { in: 'path', name: 'id' },
   ],
