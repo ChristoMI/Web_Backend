@@ -36,10 +36,11 @@ const environment = {
 
 const customerPostConfirmationLambda = new aws.lambda.CallbackFunction('createCustomerProfile', {
   callbackFactory: profileRoutes.customer.createProfile,
-  reservedConcurrentExecutions: 1,
+  reservedConcurrentExecutions: defaultConcurrentExecutions,
   tracingConfig: {
     mode: 'Active',
   },
+  memorySize: defaultMemorySize
 });
 
 const customersUserPool = new aws.cognito.UserPool('booking-user-pool-customers', {
@@ -75,10 +76,11 @@ const googleAuthProvider = new aws.cognito.IdentityProvider('google-customers-pr
 
 const hostPostConfirmationLambda = new aws.lambda.CallbackFunction('createHostProfile', {
   callbackFactory: profileRoutes.host.createProfile,
-  reservedConcurrentExecutions: 1,
+  reservedConcurrentExecutions: defaultConcurrentExecutions,
   tracingConfig: {
     mode: 'Active',
   },
+  memorySize: defaultMemorySize
 });
 
 const hostsUserPool = new aws.cognito.UserPool('booking-user-pool-hosts', {
