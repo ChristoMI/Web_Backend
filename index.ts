@@ -97,11 +97,18 @@ const hostPostConfirmPermission = new aws.lambda.Permission('hostPostConfirmPerm
   sourceArn: hostsUserPool.arn
 });
 
+const callbackUrls = [
+  'http://localhost:3000', 
+  'https://landing.booking.knine.xyz/swagger/oauth2-redirect.html', 
+  'https://auth.expo.io/@bbehrang/Bookingdesc',
+  'https://auth.expo.io/@bbehrang/BookingKPI'
+]
+
 const customersUserPoolClient = new aws.cognito.UserPoolClient('booking-user-pool-client-customers', {
   allowedOauthFlows: ['code', 'implicit'],
   allowedOauthFlowsUserPoolClient: true,
   allowedOauthScopes: ['phone', 'email', 'openid', 'profile'],
-  callbackUrls: ['http://localhost:3000', 'https://landing.booking.knine.xyz/swagger/oauth2-redirect.html', 'https://auth.expo.io/@bbehrang/Bookingdesc'],
+  callbackUrls,
   generateSecret: false,
   supportedIdentityProviders: ['COGNITO', 'Google'],
   userPoolId: customersUserPool.id,
@@ -111,7 +118,7 @@ const hostsUserPoolClient = new aws.cognito.UserPoolClient('booking-user-pool-cl
   allowedOauthFlows: ['code', 'implicit'],
   allowedOauthFlowsUserPoolClient: true,
   allowedOauthScopes: ['phone', 'email', 'openid', 'profile'],
-  callbackUrls: ['http://localhost:3000', 'https://landing.booking.knine.xyz/swagger/oauth2-redirect.html', 'https://auth.expo.io/@bbehrang/Bookingdesc'],
+  callbackUrls,
   generateSecret: false,
   supportedIdentityProviders: ['COGNITO'],
   userPoolId: hostsUserPool.id,
