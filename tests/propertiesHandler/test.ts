@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import './../configTestEnvironment'
 import {createRequestFromBlueprint} from './../testApiGatewayRequest'
-import { propertyInsert, propertyUpdate, propertyGetById, propertiesGet } from "./../../src/routes/propertiesRoute";
+import { propertyInsert, propertyUpdate, propertyGetById, propertiesGet } from "../../src/routes/properties/propertiesRoute";
 import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '$src/routes/settings';
 
 describe('propertiesRoute route', () => {

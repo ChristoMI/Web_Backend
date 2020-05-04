@@ -8,7 +8,7 @@ import { testRouteGet, testRouteCreate } from './src/routes/testRoute';
 
 import {
   propertyInsert, propertyUpdate, propertyGetById, propertiesGet
-} from './src/routes/propertiesRoute';
+} from './src/routes/properties/propertiesRoute';
 import * as commentsRoutes from '$src/routes/comments';
 import * as profileRoutes from '$src/routes/profile';
 

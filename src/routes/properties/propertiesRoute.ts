@@ -1,10 +1,10 @@
 import * as awsx from '@pulumi/awsx';
 import * as uuid from 'uuid';
 import { DynamoDB } from 'aws-sdk';
-import { createDynamo, createS3 } from '../initAWS';
-import { ImageService, imageUrlFormatter } from '../propertyImageService';
+import { createDynamo, createS3 } from '../../initAWS';
+import { ImageService, imageUrlFormatter } from '../../propertyImageService';
 import { parseBody, buildApiResponse, add500Handler } from '$src/apiGatewayUtilities';
-import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from './settings';
+import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '../settings';
 
 function toResponse(dynamodbEntry: DynamoDB.AttributeMap, toUrl: (key: string) => string) {
   return {

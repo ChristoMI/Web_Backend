@@ -6,7 +6,7 @@ import sinon = require('sinon');
 import { expect } from 'chai';
 import { createRequestFromBlueprint } from '../testApiGatewayRequest';
 import * as commentsRoutes from '$src/routes/comments';
-import { propertyInsert } from '$src/routes/propertiesRoute';
+import { propertyInsert } from '$src/routes/properties/propertiesRoute';
 import AnalysisService from '$src/services/AnalysisService';
 import { getMoodType } from '$src/routes/comments/moodTypeConversion';
 
