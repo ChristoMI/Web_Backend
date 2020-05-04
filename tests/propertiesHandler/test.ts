@@ -100,5 +100,5 @@ describe('propertiesRoute route', () => {
     expect(newProperty.images).to.have.length(1);
     expect(newProperty.images[0].id).to.be.equal(1);
     expectUrlToBeOf(newProperty.images[0].url, filename);
-  })
+  });
 });
