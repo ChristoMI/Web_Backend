@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import '../configTestEnvironment';
 import { createRequestFromBlueprint } from '../testApiGatewayRequest';
 import {
-  propertyInsert, propertyUpdate, propertyGetById, propertiesGet,
+  propertyInsert, propertyUpdate, propertyGetById, propertiesGet, propertyAddImage,
 } from '../../src/routes/properties/propertiesRoute';
 import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '$src/routes/settings';
 
@@ -37,6 +37,12 @@ describe('propertiesRoute route', () => {
     expect(JSON.parse(result.body).cover_image_url).to.satisfy((s: string) => s.startsWith('https://'), result.body);
   });
 
+  function expectUrlToBeOf(url: string, filename: string) {
+    expect(url).to.not.be.empty;
+    expect(url).to.contain(filename);
+    expect(url).to.satisfy((s: string) => s.startsWith('https://'));
+  }
+
   it('can get cover image after upload', async () => {
     const body = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
     const filename = 'image.png';
@@ -46,9 +52,7 @@ describe('propertiesRoute route', () => {
     const id = JSON.parse(result.body).id;
     const getResult = await propertyGetById()(createRequestFromBlueprint({}, { id }));
     expect(getResult.statusCode).to.equal(200);
-    expect(JSON.parse(getResult.body).cover_image_url).to.not.be.empty;
-    expect(JSON.parse(getResult.body).cover_image_url).to.contain(filename);
-    expect(JSON.parse(getResult.body).cover_image_url).to.satisfy((s: string) => s.startsWith('https://'));
+    expectUrlToBeOf(JSON.parse(getResult.body).cover_image_url, filename);
   });
 
   it('should return new property on get after create', async () => {
@@ -76,4 +80,25 @@ describe('propertiesRoute route', () => {
     expect(JSON.parse(putResult.body).created_date).to.be
       .equal(JSON.parse(postResult.body).created_date);
   });
+
+  it('should be able to add property image', async () => {
+    const postResult = await propertyInsert()(createRequestFromBlueprint({ name: 'LOL', description: 'KEK' }));
+    const id = JSON.parse(postResult.body).id;
+
+    const body = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+    const filename = 'image.png';
+    const reqBody = { image_base64: body, image_file_name: filename };
+    const addImageResponse = await propertyAddImage()(createRequestFromBlueprint(reqBody, { id }));
+    expect(postResult.statusCode).to.equal(200);
+    expect(addImageResponse.statusCode).to.equal(200);
+
+    const newProperty = JSON.parse(addImageResponse.body);
+    expect(newProperty.id).to.be.equal(id);
+    expect(newProperty.name).to.be.equal('LOL');
+    expect(newProperty.description).to.be.equal('KEK');
+    expect(newProperty.created_date).to.be.equal(JSON.parse(postResult.body).created_date);
+    expect(newProperty.images).to.have.length(1);
+    expect(newProperty.images[0].id).to.be.equal(1);
+    expectUrlToBeOf(newProperty.images[0].url, filename);
+  })
 });

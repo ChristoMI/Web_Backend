@@ -6,13 +6,31 @@ import { parseBody, buildApiResponse, add500Handler } from '$src/apiGatewayUtili
 import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '../settings';
 import { PropertiesDynamoModel, Property } from './propertiesModel';
 
-function toResponse(property: Property, toUrl: (key: string) => string) {
+export interface PropertyImageApiResponse {
+  id: number,
+  url: string
+}
+
+export interface PropertyApiResponse {
+  id: string,
+  name: string,
+  description: string,
+  created_date: string,
+  cover_image_url?: string,
+  images: PropertyImageApiResponse[]
+}
+
+function toResponse(property: Property, toUrl: (key: string) => string): PropertyApiResponse {
   return {
     id: property.id,
     name: property.name,
     description: property.description,
-    created_date: property.created_date,
+    created_date: property.created_date.toISOString(),
     cover_image_url: property.cover_image_key && toUrl(property.cover_image_key),
+    images: property.property_images.map(img => ({
+      id: img.id,
+      url: toUrl(img.image_key),
+    })),
   };
 }
 
@@ -130,6 +148,46 @@ export function propertyGetById() {
     return property
       ? buildApiResponse(200, toResponse(property, (key) => imageUrlFormatter(key, staticDomain)))
       : buildNotFound();
+  };
+
+  return add500Handler(handler);
+}
+
+export function propertyAddImage() {
+  const dynamo = createDynamo();
+  const dbModel = new PropertiesDynamoModel(dynamo);
+
+  const s3 = createS3();
+  const staticBucket = process.env[STATIC_BUCKET_ENV_KEY];
+  const staticDomain = process.env[STATIC_DOMAIN_ENV_KEY];
+
+  if (!staticBucket || !staticDomain) {
+    throw new Error('Configuration was not provided');
+  }
+
+  const uploader = new ImageService(s3, staticBucket, 'property_images');
+
+  const handler = async (event: awsx.apigateway.Request) => {
+    const id = event.pathParameters ? event.pathParameters.id : '';
+    const body = parseBody(event);
+
+    const property = await dbModel.findById(id);
+
+    if (!property) {
+      return buildNotFound();
+    }
+
+    const newId = property.property_images.map((i) => i.id).reduce((p, n) => (p > n ? p : n), 0) + 1;
+    const imageKey = await uploader.uploadImage(id, body.image_base64, body.image_file_name);
+
+    property.property_images.push({
+      id: newId,
+      image_key: imageKey,
+    });
+
+    await dbModel.save(property);
+
+    return buildApiResponse(200, toResponse(property, (key) => imageUrlFormatter(key, staticDomain)));
   };
 
   return add500Handler(handler);
