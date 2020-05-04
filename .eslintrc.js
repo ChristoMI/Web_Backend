@@ -2,6 +2,7 @@ module.exports = {
   env: {
     es6: true,
     node: true,
+    mocha: true
   },
   extends: [
     'airbnb-base',
@@ -20,11 +21,17 @@ module.exports = {
     '@typescript-eslint',
   ],
   rules: {
+    'max-len': ["error", { "code": 130, "comments": 200 }],
     'linebreak-style': 'off',
     'eol-last': ['error', 'never'],
     'import/prefer-default-export': 'off',
     'import/no-unresolved': 'off',
     'import/extensions': 'off',
     'prefer-destructuring': 'off',
+    'indent': ['error', 2],
+    "no-unused-vars": "off",
+    "no-unused-expressions": "off",
+    "no-restricted-syntax": "off",
+    "@typescript-eslint/no-unused-vars": ["error"]
   },
 };

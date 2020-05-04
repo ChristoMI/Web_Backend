@@ -1,6 +1,5 @@
 import * as awsx from '@pulumi/awsx';
 import * as uuid from 'uuid';
-import { DynamoDB } from 'aws-sdk';
 import { createDynamo, createS3 } from '../../initAWS';
 import { ImageService, imageUrlFormatter } from '../../propertyImageService';
 import { parseBody, buildApiResponse, add500Handler } from '$src/apiGatewayUtilities';
@@ -13,7 +12,7 @@ function toResponse(property: Property, toUrl: (key: string) => string) {
     name: property.name,
     description: property.description,
     created_date: property.created_date,
-    cover_image_url: property.cover_image_key && toUrl(property.cover_image_key)
+    cover_image_url: property.cover_image_key && toUrl(property.cover_image_key),
   };
 }
 
@@ -50,7 +49,7 @@ export function propertyInsert() {
       description: body.description || '',
       name: body.name || '',
       cover_image_key: imageKey,
-      property_images: []
+      property_images: [],
     });
 
     return buildApiResponse(200, {
@@ -94,12 +93,12 @@ export function propertyUpdate() {
     }
 
     await dbModel.save({
-      id: id,
+      id,
       name: body.name || search.name,
       description: body.description || search.description,
       created_date: search.created_date,
       cover_image_key: imageKey,
-      property_images: []
+      property_images: [],
     });
 
     return buildApiResponse(200, {
@@ -146,6 +145,7 @@ export function propertiesGet() {
     throw new Error('Expected staticDomain config to be present');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handler = async (event: awsx.apigateway.Request) => {
     const properties = await dbModel.findAll();
 

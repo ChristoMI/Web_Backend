@@ -1,6 +1,8 @@
 import { apigateway } from '@pulumi/awsx';
 import { DynamoDB } from 'aws-sdk';
-import { getUserId, parseBody, marshall, buildApiResponse, add500Handler } from '$src/apiGatewayUtilities';
+import {
+  getUserId, parseBody, marshall, buildApiResponse, add500Handler,
+} from '$src/apiGatewayUtilities';
 import { createDynamo, createS3 } from '$src/initAWS';
 import { ImageService, imageUrlFormatter } from '$src/propertyImageService';
 import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '../settings';
@@ -12,7 +14,8 @@ function toResponse(entry: DynamoDB.AttributeMap, staticDomain: string) {
     email: entry.email.S,
     firstName: entry.firstName.S,
     lastName: entry.lastName.S,
-    avatarUrl: entry.avatarKey && imageUrlFormatter(entry.avatarKey.S!, staticDomain) || entry.avatarUrl && entry.avatarUrl.S,
+    avatarUrl: (entry.avatarKey && imageUrlFormatter(entry.avatarKey.S!, staticDomain))
+      || (entry.avatarUrl && entry.avatarUrl.S),
     createdAt: entry.createdAt.S,
     updatedAt: entry.updatedAt.S,
   };
@@ -50,7 +53,7 @@ export function createProfile() {
 
 export function getProfile() {
   const dynamo = createDynamo();
-  const staticDomain = process.env[STATIC_DOMAIN_ENV_KEY]!
+  const staticDomain = process.env[STATIC_DOMAIN_ENV_KEY]!;
 
   const handler = async (event: apigateway.Request) => {
     const hostId = getUserId(event);

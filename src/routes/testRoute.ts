@@ -5,6 +5,7 @@ import { createDynamo } from '../initAWS';
 export function testRouteCreate() {
   const dynamo = createDynamo();
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   return async (event: awsx.apigateway.Request) => {
     const newId = uuid();
 

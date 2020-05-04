@@ -2,10 +2,10 @@ import 'module-alias/register'; // for alias
 
 import { expect } from 'chai';
 
+import '$tests/configTestEnvironment';
+
 import routes = require('$src/routes/profile/customer');
 import stubs = require('../stubs');
-
-import '$tests/configTestEnvironment';
 
 describe('profile:customer', () => {
   before(async () => {
@@ -50,7 +50,7 @@ describe('profile:customer', () => {
         firstName: newFirstName,
         lastName: newLastName,
         avatarBase64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
-        avatarFileName: 'image.png'
+        avatarFileName: 'image.png',
       },
     });
 

@@ -3,17 +3,19 @@
 import * as awsx from '@pulumi/awsx';
 import { v4 as uuidv4 } from 'uuid';
 import { DynamoDB } from 'aws-sdk';
-import { marshall, parseBody, buildApiResponse, add500Handler, getUserId } from '$src/apiGatewayUtilities';
+import {
+  marshall, parseBody, buildApiResponse, add500Handler, getUserId,
+} from '$src/apiGatewayUtilities';
 import { createDynamo } from '$src/initAWS';
 import AnalysisService from '$src/services/AnalysisService';
 
 import { getMoodType } from './moodTypeConversion';
 
 function toResponse(entry: DynamoDB.AttributeMap, authors: Map<string, any>) {
-  const author = entry.authorId && entry.authorId.S && authors.has(entry.authorId.S) 
+  const author = entry.authorId && entry.authorId.S && authors.has(entry.authorId.S)
     ? authors.get(entry.authorId.S)
     : null;
-    
+
   return {
     id: entry.id.S,
     text: entry.text.S,
@@ -70,27 +72,25 @@ async function hasProperty(dynamo: DynamoDB, propertyId: string): Promise<boolea
 }
 
 async function getCustomerProfiles(dynamo: DynamoDB, ids: Set<string>): Promise<Map<string, any>> {
-  if(!ids.size)
-    return new Map<string, any>();
+  if (!ids.size) return new Map<string, any>();
 
-  const profilesTable = "customer"
+  const profilesTable = 'customer';
   const items = await dynamo.batchGetItem({
     RequestItems: {
       [profilesTable]: {
-        Keys: Array.from(ids.values(), id => ({
+        Keys: Array.from(ids.values(), (id) => ({
           id: {
-            S: id
-          }
-        }))
-      }
-    }
-  }).promise()
+            S: id,
+          },
+        })),
+      },
+    },
+  }).promise();
 
   const responses = items.Responses;
-  if(!responses)
-    return new Map<string, any>();
+  if (!responses) return new Map<string, any>();
 
-  return new Map(Array.from(responses[profilesTable], i => [i.id.S!, DynamoDB.Converter.unmarshall(i)]))
+  return new Map(Array.from(responses[profilesTable], (i) => [i.id.S!, DynamoDB.Converter.unmarshall(i)]));
 }
 
 export function getCommentsByPropertyId() {
@@ -118,10 +118,10 @@ export function getCommentsByPropertyId() {
 
     const comments = await query(dynamo, params)
       .then(sortByDate('createdDate'));
-    
-    const authorIds = comments.map(c => c.authorId && c.authorId.S).filter(c => c)
-    const uniqueAuthorIds = new Set(authorIds) 
-    const authors = await getCustomerProfiles(dynamo, uniqueAuthorIds)
+
+    const authorIds = comments.map((c) => c.authorId && c.authorId.S).filter((c) => c);
+    const uniqueAuthorIds = new Set(authorIds);
+    const authors = await getCustomerProfiles(dynamo, uniqueAuthorIds);
 
     return buildApiResponse(200, toArrayResponse(comments, authors));
   };
@@ -148,7 +148,7 @@ export function createPropertyComment() {
     }
 
     const mood = await analysisService.getCommentMood(body.text);
-    
+
     const comment = marshall({
       id: uuidv4(),
       text: body.text,
@@ -171,5 +171,5 @@ export function createPropertyComment() {
     return buildApiResponse(200, toResponse(comment, authors));
   };
 
-  return add500Handler(handler)
+  return add500Handler(handler);
 }

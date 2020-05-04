@@ -124,4 +124,4 @@ export function createRequest({
     },
     resource: '',
   };
-};
+}

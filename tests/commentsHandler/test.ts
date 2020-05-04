@@ -1,8 +1,6 @@
 /* eslint-disable no-undef */
 
-import 'module-alias/register'; // for alias
-
-import sinon = require('sinon');
+import 'module-alias/register';
 import { expect } from 'chai';
 import { createRequestFromBlueprint } from '../testApiGatewayRequest';
 import * as commentsRoutes from '$src/routes/comments';
@@ -10,13 +8,14 @@ import { propertyInsert } from '$src/routes/properties/propertiesRoute';
 import AnalysisService from '$src/services/AnalysisService';
 import { getMoodType } from '$src/routes/comments/moodTypeConversion';
 
-import customerRoutes = require('$src/routes/profile/customer');
-import stubs = require('../profileHandler/stubs');
-
-
 
 import '../configTestEnvironment';
-import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '$src/routes/settings';
+import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '$src/routes/settings'; // for alias
+
+import sinon = require('sinon');
+
+import customerRoutes = require('$src/routes/profile/customer');
+import stubs = require('../profileHandler/stubs');
 
 describe('comments', () => {
   before(async () => {
@@ -31,12 +30,12 @@ describe('comments', () => {
         compound: 0,
       }));
 
-      await customerRoutes.createProfile()(stubs.customerPostConfirmationEvent, {}, () => {});
+    await customerRoutes.createProfile()(stubs.customerPostConfirmationEvent, {}, () => {});
   });
 
   function createComment(propertyId: string, text: string) {
     const request = createRequestFromBlueprint({
-      text: text,
+      text,
     }, {
       id: propertyId,
     }, stubs.customer.id);
@@ -112,7 +111,7 @@ describe('comments', () => {
 
     const propertyId = JSON.parse(data1.body).id;
 
-    await createComment(propertyId, 'Horrible hotel, never will stay here again');;
+    await createComment(propertyId, 'Horrible hotel, never will stay here again');
 
     const request3 = createRequestFromBlueprint({}, {
       id: propertyId,

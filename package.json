@@ -2,6 +2,7 @@
     "name": "booking_api",
     "scripts": {
         "eslint": "eslint . --ext .ts",
+        "eslint-fix": "eslint . --ext .ts --fix",
         "test": "mocha -r ts-node/register 'tests/**/test.ts'",
         "initLocal": "ts-node tests/setup/initEnvironment.ts"
     },

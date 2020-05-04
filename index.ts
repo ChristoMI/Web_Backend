@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import 'module-alias/register'; // for alias
 
 import * as pulumi from '@pulumi/pulumi';
@@ -7,7 +8,7 @@ import { Route } from '@pulumi/awsx/apigateway/api';
 import { testRouteGet, testRouteCreate } from './src/routes/testRoute';
 
 import {
-  propertyInsert, propertyUpdate, propertyGetById, propertiesGet
+  propertyInsert, propertyUpdate, propertyGetById, propertiesGet,
 } from './src/routes/properties/propertiesRoute';
 import * as commentsRoutes from '$src/routes/comments';
 import * as profileRoutes from '$src/routes/profile';
@@ -40,7 +41,7 @@ const customerPostConfirmationLambda = new aws.lambda.CallbackFunction('createCu
   tracingConfig: {
     mode: 'Active',
   },
-  memorySize: defaultMemorySize
+  memorySize: defaultMemorySize,
 });
 
 const customersUserPool = new aws.cognito.UserPool('booking-user-pool-customers', {
@@ -54,7 +55,7 @@ const customerPostConfirmPermission = new aws.lambda.Permission('customerPostCon
   action: 'lambda:InvokeFunction',
   function: customerPostConfirmationLambda,
   principal: 'cognito-idp.amazonaws.com',
-  sourceArn: customersUserPool.arn
+  sourceArn: customersUserPool.arn,
 });
 
 const googleAuthProvider = new aws.cognito.IdentityProvider('google-customers-provider', {
@@ -64,15 +65,15 @@ const googleAuthProvider = new aws.cognito.IdentityProvider('google-customers-pr
   providerDetails: {
     client_id: googleClientId,
     client_secret: googleClientSecret,
-    authorize_scopes: 'profile email'
+    authorize_scopes: 'profile email',
   },
   attributeMapping: {
-    'given_name': 'given_name',
-    'family_name': 'family_name',
-    'picture': 'picture',
-    'email': 'email'
-  }
-})
+    given_name: 'given_name',
+    family_name: 'family_name',
+    picture: 'picture',
+    email: 'email',
+  },
+});
 
 const hostPostConfirmationLambda = new aws.lambda.CallbackFunction('createHostProfile', {
   callbackFactory: profileRoutes.host.createProfile,
@@ -80,7 +81,7 @@ const hostPostConfirmationLambda = new aws.lambda.CallbackFunction('createHostPr
   tracingConfig: {
     mode: 'Active',
   },
-  memorySize: defaultMemorySize
+  memorySize: defaultMemorySize,
 });
 
 const hostsUserPool = new aws.cognito.UserPool('booking-user-pool-hosts', {
@@ -94,15 +95,15 @@ const hostPostConfirmPermission = new aws.lambda.Permission('hostPostConfirmPerm
   action: 'lambda:InvokeFunction',
   function: hostPostConfirmationLambda,
   principal: 'cognito-idp.amazonaws.com',
-  sourceArn: hostsUserPool.arn
+  sourceArn: hostsUserPool.arn,
 });
 
 const callbackUrls = [
-  'http://localhost:3000', 
-  'https://landing.booking.knine.xyz/swagger/oauth2-redirect.html', 
+  'http://localhost:3000',
+  'https://landing.booking.knine.xyz/swagger/oauth2-redirect.html',
   'https://auth.expo.io/@bbehrang/Bookingdesc',
-  'https://auth.expo.io/@bbehrang/BookingKPI'
-]
+  'https://auth.expo.io/@bbehrang/BookingKPI',
+];
 
 const customersUserPoolClient = new aws.cognito.UserPoolClient('booking-user-pool-client-customers', {
   allowedOauthFlows: ['code', 'implicit'],
@@ -128,18 +129,24 @@ const customersUserPoolDomain = new aws.cognito.UserPoolDomain('booking-user-poo
   domain: 'booking-user-pool-domain-customer',
   userPoolId: customersUserPool.id,
 }, {
-  deleteBeforeReplace: true
+  deleteBeforeReplace: true,
 });
 
 const hostsUserPoolDomain = new aws.cognito.UserPoolDomain('booking-user-pool-domain-hosts', {
   domain: 'booking-user-pool-domain-host',
   userPoolId: hostsUserPool.id,
 }, {
-  deleteBeforeReplace: true
+  deleteBeforeReplace: true,
 });
 
-const cognitoAuthorizerCustomers = awsx.apigateway.getCognitoAuthorizer({ authorizerName: 'CognitoAuthorizerCustomers', providerARNs: [customersUserPool] });
-const cognitoAuthorizerHosts = awsx.apigateway.getCognitoAuthorizer({ authorizerName: 'CognitoAuthorizerHosts', providerARNs: [hostsUserPool] });
+const cognitoAuthorizerCustomers = awsx.apigateway.getCognitoAuthorizer({
+  authorizerName: 'CognitoAuthorizerCustomers',
+  providerARNs: [customersUserPool],
+});
+const cognitoAuthorizerHosts = awsx.apigateway.getCognitoAuthorizer({
+  authorizerName: 'CognitoAuthorizerHosts',
+  providerARNs: [hostsUserPool],
+});
 
 let routes: Route[] = [{
   path: '/test/{id}',
@@ -178,7 +185,7 @@ let routes: Route[] = [{
       mode: 'Active',
     },
     environment,
-    memorySize: defaultMemorySize
+    memorySize: defaultMemorySize,
   }),
 },
 {
@@ -192,7 +199,7 @@ let routes: Route[] = [{
       mode: 'Active',
     },
     environment,
-    memorySize: defaultMemorySize
+    memorySize: defaultMemorySize,
   }),
 },
 {
@@ -206,7 +213,7 @@ let routes: Route[] = [{
       mode: 'Active',
     },
     environment,
-    memorySize: defaultMemorySize
+    memorySize: defaultMemorySize,
   }),
 },
 {
@@ -220,7 +227,7 @@ let routes: Route[] = [{
       mode: 'Active',
     },
     environment,
-    memorySize: defaultMemorySize
+    memorySize: defaultMemorySize,
   }),
 },
 {
@@ -233,7 +240,7 @@ let routes: Route[] = [{
       mode: 'Active',
     },
     environment,
-    memorySize: defaultMemorySize
+    memorySize: defaultMemorySize,
   }),
 },
 {
@@ -249,7 +256,7 @@ let routes: Route[] = [{
       mode: 'Active',
     },
     environment,
-    memorySize: defaultMemorySize
+    memorySize: defaultMemorySize,
   }),
 },
 {
@@ -263,7 +270,7 @@ let routes: Route[] = [{
       mode: 'Active',
     },
     environment,
-    memorySize: defaultMemorySize
+    memorySize: defaultMemorySize,
   }),
 },
 {
@@ -280,7 +287,7 @@ let routes: Route[] = [{
       mode: 'Active',
     },
     environment,
-    memorySize: defaultMemorySize
+    memorySize: defaultMemorySize,
   }),
 },
 {
@@ -297,7 +304,7 @@ let routes: Route[] = [{
       mode: 'Active',
     },
     environment,
-    memorySize: defaultMemorySize
+    memorySize: defaultMemorySize,
   }),
 },
 {
@@ -315,12 +322,12 @@ let routes: Route[] = [{
       mode: 'Active',
     },
     environment,
-    memorySize: defaultMemorySize
+    memorySize: defaultMemorySize,
   }),
 },
 ];
 
-function addCors(routes: Route[]) {
+function addCors(corsRoutes: Route[]) {
   const corslambda = new aws.lambda.CallbackFunction<awsx.apigateway.Request, awsx.apigateway.Response>('corsLambda', {
     callback: async (e) => ({
       statusCode: 200,
@@ -334,9 +341,9 @@ function addCors(routes: Route[]) {
     reservedConcurrentExecutions: 5,
   });
 
-  const newRoutes = Array.from(routes);
+  const newRoutes = Array.from(corsRoutes);
 
-  for (const route of routes) {
+  for (const route of corsRoutes) {
     newRoutes.push({
       method: 'OPTIONS',
       path: route.path,
@@ -353,17 +360,17 @@ const api = new awsx.apigateway.API('booking-api', {
   routes,
   stageArgs: {
     xrayTracingEnabled: true,
-  }
+  },
 });
 
-const unauthorizedResponseWithCors = new aws.apigateway.Response("unauthorizedResponseWithCors", {
+const unauthorizedResponseWithCors = new aws.apigateway.Response('unauthorizedResponseWithCors', {
   responseParameters: {
-      'gatewayresponse.header.Access-Control-Allow-Origin': "'*'",
-      'gatewayresponse.header.Access-Control-Allow-Credentials': "'true'"
+    'gatewayresponse.header.Access-Control-Allow-Origin': "'*'",
+    'gatewayresponse.header.Access-Control-Allow-Credentials': "'true'",
   },
-  responseType: "UNAUTHORIZED",
+  responseType: 'UNAUTHORIZED',
   restApiId: api.restAPI.id,
-  statusCode: "401",
+  statusCode: '401',
 });
 
 const domainName = new aws.apigateway.DomainName('booking-domain', {
