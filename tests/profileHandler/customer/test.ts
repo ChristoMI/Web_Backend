@@ -3,6 +3,7 @@ import 'module-alias/register'; // for alias
 import { expect } from 'chai';
 
 import '$tests/configTestEnvironment';
+import { assertOkResult } from '$tests/assertHelpers';
 
 import routes = require('$src/routes/profile/customer');
 import stubs = require('../stubs');
@@ -18,10 +19,9 @@ describe('profile:customer', () => {
     });
 
     const result = await routes.getProfile()(request);
+    assertOkResult(result);
 
     const profile = JSON.parse(result.body);
-
-    expect(result.statusCode).to.be.equal(200);
 
     expect(profile.id).to.be.equal(stubs.customer.id);
     expect(profile.username).to.be.equal(stubs.customer.username);
@@ -55,10 +55,9 @@ describe('profile:customer', () => {
     });
 
     const result = await routes.updateProfile()(request);
+    assertOkResult(result);
 
     const profile = JSON.parse(result.body);
-
-    expect(result.statusCode).to.be.equal(200);
 
     expect(profile.id).to.be.equal(stubs.customer.id);
     expect(profile.username).to.be.equal(stubs.customer.username);

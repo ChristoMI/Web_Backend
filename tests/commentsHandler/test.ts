@@ -10,7 +10,8 @@ import { getMoodType } from '$src/routes/comments/moodTypeConversion';
 
 
 import '../configTestEnvironment';
-import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '$src/routes/settings'; // for alias
+import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '$src/routes/settings';
+import { assertOkResult } from '$tests/assertHelpers'; // for alias
 
 import sinon = require('sinon');
 
@@ -68,7 +69,9 @@ describe('comments', () => {
     const data = await propertyInsert()(createRequestFromBlueprint({
       name: 'name',
       description: 'description',
+      price: 200,
     }));
+
 
     const propertyId = JSON.parse(data.body).id;
 
@@ -77,7 +80,7 @@ describe('comments', () => {
     const result = await createComment(propertyId, text);
     const comment = JSON.parse(result.body);
 
-    expect(result.statusCode).to.be.equal(200);
+    assertOkResult(result);
 
     expect(comment.id).to.not.be.empty;
     expect(comment.text).to.be.equal(text);
@@ -105,13 +108,16 @@ describe('comments', () => {
     const request1 = createRequestFromBlueprint({
       name: 'name',
       description: 'description',
+      price: 200,
     });
 
     const data1 = await propertyInsert()(request1);
+    assertOkResult(data1);
 
     const propertyId = JSON.parse(data1.body).id;
 
-    await createComment(propertyId, 'Horrible hotel, never will stay here again');
+    const commentResponse = await createComment(propertyId, 'Horrible hotel, never will stay here again');
+    assertOkResult(commentResponse);
 
     const request3 = createRequestFromBlueprint({}, {
       id: propertyId,
@@ -119,7 +125,7 @@ describe('comments', () => {
 
     const result = await commentsRoutes.getCommentsByPropertyId()(request3);
 
-    expect(result.statusCode).to.be.equal(200);
+    assertOkResult(result);
     expect(JSON.parse(result.body)).to.be.an('array');
   });
 });

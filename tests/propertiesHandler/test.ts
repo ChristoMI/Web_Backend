@@ -5,6 +5,7 @@ import {
   propertyInsert, propertyUpdate, propertyGetById, propertiesGet, propertyAddImage, propertyRemoveImage, propertyReorderImages,
 } from '../../src/routes/properties/propertiesRoute';
 import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '$src/routes/settings';
+import { assertOkResult } from '$tests/assertHelpers';
 
 describe('propertiesRoute route', () => {
   before(() => {
@@ -13,28 +14,54 @@ describe('propertiesRoute route', () => {
   });
 
   it('should return new property on create', async () => {
-    const result = await propertyInsert()(createRequestFromBlueprint({ name: 'LOL', description: 'KEK' }));
-    expect(result.statusCode).to.equal(200);
-    expect(JSON.parse(result.body).id).to.not.be.empty;
-    expect(JSON.parse(result.body).name).to.not.be.empty;
-    expect(JSON.parse(result.body).description).to.not.be.empty;
-    expect(JSON.parse(result.body).created_date).to.not.be.empty;
+    const result = await propertyInsert()(createRequestFromBlueprint({
+      name: 'LOL',
+      description: 'KEK',
+      address: 'SOme street',
+      opportunities: ['opp1', 'opp2'],
+      landmarks: [{
+        name: 'l1',
+        distance: 12,
+      }],
+      price: 200,
+    }));
+
+    assertOkResult(result);
+
+    const created = JSON.parse(result.body);
+
+    expect(created.id).to.not.be.empty;
+    expect(created.name).to.not.be.empty;
+    expect(created.description).to.not.be.empty;
+    expect(created.created_date).to.not.be.empty;
+    expect(created.address).to.be.equal('SOme street');
+    expect(created.opportunities).to.be.eql(['opp1', 'opp2']);
+    expect(created.landmarks).to.be.eql([{ name: 'l1', distance: 12 }]);
+    expect(created.price).to.be.equal(200);
   });
 
   it('can upload cover image', async () => {
     const body = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
     const filename = 'image.png';
     const result = await propertyInsert()(createRequestFromBlueprint({
-      name: 'LOL', description: 'KEK', cover_image_base64: body, cover_image_file_name: filename,
+      name: 'LOL',
+      description: 'KEK',
+      cover_image_base64: body,
+      cover_image_file_name: filename,
+      price: 200,
     }));
-    expect(result.statusCode).to.equal(200);
-    expect(JSON.parse(result.body).id).to.not.be.empty;
-    expect(JSON.parse(result.body).name).to.not.be.empty;
-    expect(JSON.parse(result.body).description).to.not.be.empty;
-    expect(JSON.parse(result.body).created_date).to.not.be.empty;
-    expect(JSON.parse(result.body).cover_image_url).to.not.be.empty;
-    expect(JSON.parse(result.body).cover_image_url).to.contain(filename);
-    expect(JSON.parse(result.body).cover_image_url).to.satisfy((s: string) => s.startsWith('https://'), result.body);
+
+    assertOkResult(result);
+
+    const created = JSON.parse(result.body);
+
+    expect(created.id).to.not.be.empty;
+    expect(created.name).to.not.be.empty;
+    expect(created.description).to.not.be.empty;
+    expect(created.created_date).to.not.be.empty;
+    expect(created.cover_image_url).to.not.be.empty;
+    expect(created.cover_image_url).to.contain(filename);
+    expect(created.cover_image_url).to.satisfy((s: string) => s.startsWith('https://'), result.body);
   });
 
   function expectUrlToBeOf(url: string, filename: string) {
@@ -47,38 +74,73 @@ describe('propertiesRoute route', () => {
     const body = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
     const filename = 'image.png';
     const result = await propertyInsert()(createRequestFromBlueprint({
-      name: 'LOL', description: 'KEK', cover_image_base64: body, cover_image_file_name: filename,
+      name: 'LOL', description: 'KEK', cover_image_base64: body, cover_image_file_name: filename, price: 200,
     }));
+
+    assertOkResult(result);
+
     const id = JSON.parse(result.body).id;
     const getResult = await propertyGetById()(createRequestFromBlueprint({}, { id }));
-    expect(getResult.statusCode).to.equal(200);
+    assertOkResult(getResult);
+
     expectUrlToBeOf(JSON.parse(getResult.body).cover_image_url, filename);
   });
 
   it('should return new property on get after create', async () => {
-    const result = await propertyInsert()(createRequestFromBlueprint({ name: '0_o', description: '(ノò_ó)ノ︵┻━┻' }));
+    const result = await propertyInsert()(createRequestFromBlueprint({ name: '0_o', description: '(ノò_ó)ノ︵┻━┻', price: 200 }));
+    assertOkResult(result);
+
     const id = JSON.parse(result.body).id;
     const getResult = await propertyGetById()(createRequestFromBlueprint({}, { id }));
-    expect(getResult.statusCode).to.equal(200);
+    assertOkResult(getResult);
     expect(JSON.parse(getResult.body).id).to.be.equal(id);
   });
 
   it('should return array of properties', async () => {
     const result = await propertiesGet()(createRequestFromBlueprint({}));
-    expect(result.statusCode).to.equal(200);
+    assertOkResult(result);
+
     expect(JSON.parse(result.body)).to.be.an('array');
   });
 
   it('should update property after create', async () => {
-    const postResult = await propertyInsert()(createRequestFromBlueprint({ name: 'LOL', description: 'KEK' }));
-    const id = JSON.parse(postResult.body).id;
-    const putResult = await propertyUpdate()(createRequestFromBlueprint({ name: 'Another LOL' }, { id }));
-    expect(postResult.statusCode).to.equal(200);
-    expect(putResult.statusCode).to.equal(200);
-    expect(JSON.parse(putResult.body).name).to.be.equal('Another LOL');
-    expect(JSON.parse(putResult.body).description).to.be.equal('KEK');
-    expect(JSON.parse(putResult.body).created_date).to.be
-      .equal(JSON.parse(postResult.body).created_date);
+    const postResult = await propertyInsert()(createRequestFromBlueprint({
+      name: 'LOL',
+      description: 'KEK',
+      address: 'SOme street',
+      opportunities: ['opp1', 'opp2'],
+      landmarks: [{
+        name: 'l1',
+        distance: 12,
+      }],
+      price: 200,
+    }));
+    assertOkResult(postResult);
+
+    const created = JSON.parse(postResult.body);
+
+    const id = created.id;
+    const putResult = await propertyUpdate()(createRequestFromBlueprint({
+      name: 'Another LOL',
+      address: 'SOme street1',
+      opportunities: ['opp2'],
+      landmarks: [{
+        name: 'l2',
+        distance: 12,
+      }],
+    }, { id }));
+    assertOkResult(putResult);
+
+    const updated = JSON.parse(putResult.body);
+
+    expect(updated.name).to.be.equal('Another LOL');
+    expect(updated.description).to.be.equal('KEK');
+    expect(updated.created_date).to.be
+      .equal(created.created_date);
+    expect(updated.address).to.be.equal('SOme street1');
+    expect(updated.opportunities).to.be.eql(['opp2']);
+    expect(updated.landmarks).to.be.eql([{ name: 'l2', distance: 12 }]);
+    expect(updated.price).to.be.equal(200);
   });
 
   describe('property images', async () => {
@@ -90,18 +152,20 @@ describe('propertiesRoute route', () => {
     let createImageResponse: any = {};
 
     beforeEach(async () => {
-      createPropertyResponse = await propertyInsert()(createRequestFromBlueprint({ name: 'LOL', description: 'KEK' }));
+      createPropertyResponse = await propertyInsert()(
+        createRequestFromBlueprint({ name: 'LOL', description: 'KEK', price: 200 }),
+      );
+      assertOkResult(createPropertyResponse);
       propertyId = JSON.parse(createPropertyResponse.body).id;
 
       const body = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
       const reqBody = { image_base64: body, image_file_name: filename };
       createImageResponse = await propertyAddImage()(createRequestFromBlueprint(reqBody, { id: propertyId }));
+      assertOkResult(createImageResponse);
       property = JSON.parse(createImageResponse.body);
     });
 
     it('should be able to add property image', () => {
-      expect(createImageResponse.statusCode).to.equal(200);
-
       expect(property.id).to.be.equal(propertyId);
       expect(property.name).to.be.equal('LOL');
       expect(property.description).to.be.equal('KEK');
@@ -116,7 +180,7 @@ describe('propertiesRoute route', () => {
         createRequestFromBlueprint({}, { id: propertyId, imageId: 1 }),
       );
 
-      expect(removeImageResponse.statusCode).to.be.equal(200);
+      assertOkResult(removeImageResponse);
 
       const newProperty = JSON.parse(removeImageResponse.body);
       expect(newProperty.images).to.have.length(0);
@@ -125,14 +189,15 @@ describe('propertiesRoute route', () => {
     it('should be able to reorder property images', async () => {
       const body = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
       const reqBody = { image_base64: body, image_file_name: filename };
-      await propertyAddImage()(createRequestFromBlueprint(reqBody, { id: propertyId }));
+      const addImgResponse = await propertyAddImage()(createRequestFromBlueprint(reqBody, { id: propertyId }));
+      assertOkResult(addImgResponse);
 
       const reordered = [2, 1];
       const reorderResponse = await propertyReorderImages()(
         createRequestFromBlueprint({ imageIdsInOrder: reordered }, { id: propertyId }),
       );
 
-      expect(reorderResponse.statusCode).to.be.equal(200);
+      assertOkResult(reorderResponse);
 
       const newProperty = JSON.parse(reorderResponse.body);
       expect(newProperty.images).to.have.length(2);

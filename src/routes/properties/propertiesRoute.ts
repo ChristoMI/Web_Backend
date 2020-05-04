@@ -13,13 +13,22 @@ export interface PropertyImageApiResponse {
   url: string
 }
 
+export interface PropertyLandmarkApiResponse {
+  name: string;
+  distance: number;
+}
+
 export interface PropertyApiResponse {
   id: string,
   name: string,
   description: string,
   created_date: string,
   cover_image_url?: string,
-  images: PropertyImageApiResponse[]
+  images: PropertyImageApiResponse[];
+  address: string;
+  opportunities: string[];
+  landmarks: PropertyLandmarkApiResponse[];
+  price: number;
 }
 
 function toResponse(property: Property, toUrl: (key: string) => string): PropertyApiResponse {
@@ -33,6 +42,10 @@ function toResponse(property: Property, toUrl: (key: string) => string): Propert
       id: img.id,
       url: toUrl(img.image_key),
     })),
+    address: property.address,
+    landmarks: property.landmarks,
+    opportunities: property.opportunities,
+    price: property.price,
   };
 }
 
@@ -55,30 +68,38 @@ export function propertyInsert() {
 
   const handler = async (event: awsx.apigateway.Request) => {
     const newId = uuid();
-    const body = parseBody(event);
+    const {
+      description, name, address, landmarks, opportunities, price, cover_image_base64, cover_image_file_name,
+    } = parseBody(event);
     const date = new Date();
 
     let imageKey: string | undefined;
-    if (body.cover_image_base64 && body.cover_image_file_name) {
-      imageKey = await uploader.uploadImage(newId, body.cover_image_base64, body.cover_image_file_name);
+    if (cover_image_base64 && cover_image_file_name) {
+      imageKey = await uploader.uploadImage(newId, cover_image_base64, cover_image_file_name);
     }
 
-    await dbModel.save({
+    const errMissing = (prop: string) => buildBadRequestResponse(`Please provide the ${prop} field for the property`);
+
+    if (!price) return errMissing('price');
+    if (!name) return errMissing('name');
+    if (!description) return errMissing('description');
+
+    const property: Property = {
       id: newId,
       created_date: date,
-      description: body.description || '',
-      name: body.name || '',
+      description: description.toString(),
+      name: name.toString(),
       cover_image_key: imageKey,
       property_images: [],
-    });
+      address: address || 'NONE',
+      landmarks: landmarks || [],
+      opportunities: opportunities || [],
+      price: +price,
+    };
 
-    return buildApiResponse(200, {
-      id: newId,
-      name: body.name || '',
-      description: body.description || '',
-      created_date: date,
-      cover_image_url: imageKey ? imageUrlFormatter(imageKey, staticDomain) : undefined,
-    });
+    await dbModel.save(property);
+
+    return buildApiResponse(200, toResponse(property, (key) => imageUrlFormatter(key, staticDomain)));
   };
 
   return add500Handler(handler);
@@ -99,7 +120,9 @@ export function propertyUpdate() {
 
   const handler = async (event: awsx.apigateway.Request) => {
     const id = event.pathParameters ? event.pathParameters.id : '';
-    const body = parseBody(event);
+    const {
+      name, description, address, landmarks, opportunities, price, cover_image_base64, cover_image_file_name,
+    } = parseBody(event);
 
     const search = await dbModel.findById(id);
 
@@ -108,26 +131,26 @@ export function propertyUpdate() {
     }
 
     let imageKey = search.cover_image_key;
-    if (body.cover_image_base64 && body.cover_image_file_name) {
-      imageKey = await uploader.uploadImage(id, body.cover_image_base64, body.cover_image_file_name);
+    if (cover_image_base64 && cover_image_file_name) {
+      imageKey = await uploader.uploadImage(id, cover_image_base64, cover_image_file_name);
     }
 
-    await dbModel.save({
+    const property: Property = {
       id,
-      name: body.name || search.name,
-      description: body.description || search.description,
+      name: name || search.name,
+      description: description || search.description,
       created_date: search.created_date,
       cover_image_key: imageKey,
       property_images: [],
-    });
+      address: address || search.address,
+      landmarks: landmarks || search.landmarks,
+      opportunities: opportunities || search.opportunities,
+      price: price || search.price,
+    };
 
-    return buildApiResponse(200, {
-      id,
-      name: body.name || search.name,
-      description: body.description || search.description,
-      created_date: search.created_date,
-      cover_image_url: imageKey ? imageUrlFormatter(imageKey, staticDomain) : undefined,
-    });
+    await dbModel.save(property);
+
+    return buildApiResponse(200, toResponse(property, (key) => imageUrlFormatter(key, staticDomain)));
   };
 
   return add500Handler(handler);
