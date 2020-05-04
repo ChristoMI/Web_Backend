@@ -4,10 +4,10 @@
  */
 
 import '../configTestEnvironment';
+import * as dynamoStructure from '../../infrastructure/dynamodb';
 import { Table } from '@pulumi/aws/dynamodb';
 import * as AWS from 'aws-sdk';
-import * as pulumi from '@pulumi/pulumi';
-import * as dynamoStructure from '../../infrastructure/dynamodb';
+import * as pulumi from "@pulumi/pulumi";
 
 const promise = <T>(out: pulumi.Output<T>): Promise<pulumi.Unwrap<T>> => {
   const anyOut: any = out;

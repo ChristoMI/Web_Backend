@@ -18,7 +18,7 @@ export interface PropertyImage {
 export class PropertiesDynamoModel {
     private dynamodb: DynamoDB;
 
-    readonly tableName = 'properties';
+    private readonly tableName = 'properties';
 
 
     constructor(dynamodb: DynamoDB) {
