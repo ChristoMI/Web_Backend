@@ -8,7 +8,7 @@ import { Route } from '@pulumi/awsx/apigateway/api';
 import { testRouteGet, testRouteCreate } from './src/routes/testRoute';
 
 import {
-  propertyInsert, propertyUpdate, propertyGetById, propertiesGet,
+  propertyInsert, propertyUpdate, propertyGetById, propertiesGet, propertyAddImage, propertyRemoveImage, propertyReorderImages,
 } from './src/routes/properties/propertiesRoute';
 import * as commentsRoutes from '$src/routes/comments';
 import * as profileRoutes from '$src/routes/profile';
@@ -282,6 +282,58 @@ let routes: Route[] = [{
   ],
   eventHandler: new aws.lambda.CallbackFunction('propertyUpdate', {
     callbackFactory: propertyUpdate,
+    reservedConcurrentExecutions: defaultConcurrentExecutions,
+    tracingConfig: {
+      mode: 'Active',
+    },
+    environment,
+    memorySize: defaultMemorySize,
+  }),
+},
+{
+  path: '/properties/{id}/images',
+  method: 'POST',
+  authorizers: cognitoAuthorizerHosts,
+  requiredParameters: [
+    { in: 'path', name: 'id' },
+  ],
+  eventHandler: new aws.lambda.CallbackFunction('propertyAddImage', {
+    callbackFactory: propertyAddImage,
+    reservedConcurrentExecutions: defaultConcurrentExecutions,
+    tracingConfig: {
+      mode: 'Active',
+    },
+    environment,
+    memorySize: defaultMemorySize,
+  }),
+},
+{
+  path: '/properties/{id}/images/{imageId}',
+  method: 'DELETE',
+  authorizers: cognitoAuthorizerHosts,
+  requiredParameters: [
+    { in: 'path', name: 'id' },
+    { in: 'path', name: 'imageId' },
+  ],
+  eventHandler: new aws.lambda.CallbackFunction('propertyRemoveImage', {
+    callbackFactory: propertyRemoveImage,
+    reservedConcurrentExecutions: defaultConcurrentExecutions,
+    tracingConfig: {
+      mode: 'Active',
+    },
+    environment,
+    memorySize: defaultMemorySize,
+  }),
+},
+{
+  path: '/properties/{id}/images/order',
+  method: 'PUT',
+  authorizers: cognitoAuthorizerHosts,
+  requiredParameters: [
+    { in: 'path', name: 'id' },
+  ],
+  eventHandler: new aws.lambda.CallbackFunction('propertyReorderImages', {
+    callbackFactory: propertyReorderImages,
     reservedConcurrentExecutions: defaultConcurrentExecutions,
     tracingConfig: {
       mode: 'Active',
