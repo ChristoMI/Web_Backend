@@ -35,6 +35,13 @@ export function buildApiResponse(
   };
 }
 
+export function buildBadRequestResponse(errorText: string, details: {[key: string]: any} = {}) {
+  return buildApiResponse(400, {
+    error: errorText,
+    details,
+  });
+}
+
 export function add500Handler(func: (event: apigateway.Request) => Promise<apigateway.Response>) {
   return async (event: apigateway.Request) => {
     try {

@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import '../configTestEnvironment';
 import { createRequestFromBlueprint } from '../testApiGatewayRequest';
 import {
-  propertyInsert, propertyUpdate, propertyGetById, propertiesGet, propertyAddImage,
+  propertyInsert, propertyUpdate, propertyGetById, propertiesGet, propertyAddImage, propertyRemoveImage, propertyReorderImages,
 } from '../../src/routes/properties/propertiesRoute';
 import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '$src/routes/settings';
 
@@ -81,24 +81,62 @@ describe('propertiesRoute route', () => {
       .equal(JSON.parse(postResult.body).created_date);
   });
 
-  it('should be able to add property image', async () => {
-    const postResult = await propertyInsert()(createRequestFromBlueprint({ name: 'LOL', description: 'KEK' }));
-    const id = JSON.parse(postResult.body).id;
-
-    const body = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+  describe('property images', async () => {
     const filename = 'image.png';
-    const reqBody = { image_base64: body, image_file_name: filename };
-    const addImageResponse = await propertyAddImage()(createRequestFromBlueprint(reqBody, { id }));
-    expect(postResult.statusCode).to.equal(200);
-    expect(addImageResponse.statusCode).to.equal(200);
 
-    const newProperty = JSON.parse(addImageResponse.body);
-    expect(newProperty.id).to.be.equal(id);
-    expect(newProperty.name).to.be.equal('LOL');
-    expect(newProperty.description).to.be.equal('KEK');
-    expect(newProperty.created_date).to.be.equal(JSON.parse(postResult.body).created_date);
-    expect(newProperty.images).to.have.length(1);
-    expect(newProperty.images[0].id).to.be.equal(1);
-    expectUrlToBeOf(newProperty.images[0].url, filename);
+    let propertyId = 0;
+    let property: any = {};
+    let createPropertyResponse: any = {};
+    let createImageResponse: any = {};
+
+    beforeEach(async () => {
+      createPropertyResponse = await propertyInsert()(createRequestFromBlueprint({ name: 'LOL', description: 'KEK' }));
+      propertyId = JSON.parse(createPropertyResponse.body).id;
+
+      const body = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+      const reqBody = { image_base64: body, image_file_name: filename };
+      createImageResponse = await propertyAddImage()(createRequestFromBlueprint(reqBody, { id: propertyId }));
+      property = JSON.parse(createImageResponse.body);
+    });
+
+    it('should be able to add property image', () => {
+      expect(createImageResponse.statusCode).to.equal(200);
+
+      expect(property.id).to.be.equal(propertyId);
+      expect(property.name).to.be.equal('LOL');
+      expect(property.description).to.be.equal('KEK');
+      expect(property.created_date).to.be.equal(JSON.parse(createPropertyResponse.body).created_date);
+      expect(property.images).to.have.length(1);
+      expect(property.images[0].id).to.be.equal(1);
+      expectUrlToBeOf(property.images[0].url, filename);
+    });
+
+    it('should be able to delete property image', async () => {
+      const removeImageResponse = await propertyRemoveImage()(
+        createRequestFromBlueprint({}, { id: propertyId, imageId: 1 }),
+      );
+
+      expect(removeImageResponse.statusCode).to.be.equal(200);
+
+      const newProperty = JSON.parse(removeImageResponse.body);
+      expect(newProperty.images).to.have.length(0);
+    });
+
+    it('should be able to reorder property images', async () => {
+      const body = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+      const reqBody = { image_base64: body, image_file_name: filename };
+      await propertyAddImage()(createRequestFromBlueprint(reqBody, { id: propertyId }));
+
+      const reordered = [2, 1];
+      const reorderResponse = await propertyReorderImages()(
+        createRequestFromBlueprint({ imageIdsInOrder: reordered }, { id: propertyId }),
+      );
+
+      expect(reorderResponse.statusCode).to.be.equal(200);
+
+      const newProperty = JSON.parse(reorderResponse.body);
+      expect(newProperty.images).to.have.length(2);
+      expect(newProperty.images.map((i: any) => i.id)).to.be.eql([2, 1]);
+    });
   });
 });

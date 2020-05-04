@@ -2,7 +2,9 @@ import * as awsx from '@pulumi/awsx';
 import * as uuid from 'uuid';
 import { createDynamo, createS3 } from '../../initAWS';
 import { ImageService, imageUrlFormatter } from '../../propertyImageService';
-import { parseBody, buildApiResponse, add500Handler } from '$src/apiGatewayUtilities';
+import {
+  parseBody, buildApiResponse, add500Handler, buildBadRequestResponse,
+} from '$src/apiGatewayUtilities';
 import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '../settings';
 import { PropertiesDynamoModel, Property } from './propertiesModel';
 
@@ -184,6 +186,90 @@ export function propertyAddImage() {
       id: newId,
       image_key: imageKey,
     });
+
+    await dbModel.save(property);
+
+    return buildApiResponse(200, toResponse(property, (key) => imageUrlFormatter(key, staticDomain)));
+  };
+
+  return add500Handler(handler);
+}
+
+export function propertyRemoveImage() {
+  const dynamo = createDynamo();
+  const dbModel = new PropertiesDynamoModel(dynamo);
+
+  const staticDomain = process.env[STATIC_DOMAIN_ENV_KEY];
+
+  if (!staticDomain) {
+    throw new Error('Configuration was not provided');
+  }
+
+  const handler = async (event: awsx.apigateway.Request) => {
+    const id = event.pathParameters ? event.pathParameters.id : '';
+    const imageId = event.pathParameters ? +event.pathParameters.imageId : 0;
+
+    const property = await dbModel.findById(id);
+
+    if (!property) {
+      return buildNotFound();
+    }
+
+    const toRemove = property.property_images.find(pi => pi.id === imageId);
+
+    if (!toRemove) {
+      return buildNotFound();
+    }
+
+    property.property_images = property.property_images.filter(i => i !== toRemove);
+
+    await dbModel.save(property);
+
+    return buildApiResponse(200, toResponse(property, (key) => imageUrlFormatter(key, staticDomain)));
+  };
+
+  return add500Handler(handler);
+}
+
+export function propertyReorderImages() {
+  const dynamo = createDynamo();
+  const dbModel = new PropertiesDynamoModel(dynamo);
+
+  const staticDomain = process.env[STATIC_DOMAIN_ENV_KEY];
+
+  if (!staticDomain) {
+    throw new Error('Configuration was not provided');
+  }
+
+  const handler = async (event: awsx.apigateway.Request) => {
+    const id = event.pathParameters ? event.pathParameters.id : '';
+    const property = await dbModel.findById(id);
+
+    if (!property) {
+      return buildNotFound();
+    }
+
+    const body = parseBody(event);
+    const imageIds: number[] = body.imageIdsInOrder || [];
+
+    if (imageIds.length !== property.property_images.length) {
+      return buildBadRequestResponse(`Expected an array of image ids with the same length as the amound of images in the property 
+      (expected length=${property.property_images.length})`);
+    }
+
+    const newPropertyImages = [];
+    for (let idx = 0; idx < imageIds.length; idx++) {
+      const imageId = imageIds[idx];
+      const saved = property.property_images.find(i => i.id === imageId);
+
+      if (!saved) {
+        return buildBadRequestResponse(`Could not find image with id=${imageId}`);
+      }
+
+      newPropertyImages.push(saved);
+    }
+
+    property.property_images = newPropertyImages;
 
     await dbModel.save(property);
 

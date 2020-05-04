@@ -34,6 +34,7 @@ module.exports = {
     "no-restricted-syntax": "off",
     "@typescript-eslint/no-unused-vars": ["error"],
     'camelcase': 'off',
-    'arrow-parens': 'off'
+    'arrow-parens': 'off',
+    'no-plusplus': 'off'
   },
 };
