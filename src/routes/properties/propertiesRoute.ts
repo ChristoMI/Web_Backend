@@ -49,7 +49,8 @@ export function propertyInsert() {
       created_date: date,
       description: body.description || '',
       name: body.name || '',
-      cover_image_key: imageKey
+      cover_image_key: imageKey,
+      property_images: []
     });
 
     return buildApiResponse(200, {
@@ -97,7 +98,8 @@ export function propertyUpdate() {
       name: body.name || search.name,
       description: body.description || search.description,
       created_date: search.created_date,
-      cover_image_key: imageKey
+      cover_image_key: imageKey,
+      property_images: []
     });
 
     return buildApiResponse(200, {
