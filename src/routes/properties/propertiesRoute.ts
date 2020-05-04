@@ -5,16 +5,15 @@ import { createDynamo, createS3 } from '../../initAWS';
 import { ImageService, imageUrlFormatter } from '../../propertyImageService';
 import { parseBody, buildApiResponse, add500Handler } from '$src/apiGatewayUtilities';
 import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '../settings';
+import { PropertiesDynamoModel, Property } from './propertiesModel';
 
-function toResponse(dynamodbEntry: DynamoDB.AttributeMap, toUrl: (key: string) => string) {
+function toResponse(property: Property, toUrl: (key: string) => string) {
   return {
-    id: dynamodbEntry.id.S,
-    name: dynamodbEntry.name.S,
-    description: dynamodbEntry.description.S,
-    created_date: dynamodbEntry.created_date.S,
-    cover_image_url: (dynamodbEntry.cover_image_key && dynamodbEntry.cover_image_key.S)
-      ? toUrl(dynamodbEntry.cover_image_key.S)
-      : undefined,
+    id: property.id,
+    name: property.name,
+    description: property.description,
+    created_date: property.created_date,
+    cover_image_url: property.cover_image_key && toUrl(property.cover_image_key)
   };
 }
 
@@ -24,6 +23,7 @@ function buildNotFound() {
 
 export function propertyInsert() {
   const dynamo = createDynamo();
+  const dbModel = new PropertiesDynamoModel(dynamo);
   const s3 = createS3();
   const staticBucket = process.env[STATIC_BUCKET_ENV_KEY];
   const staticDomain = process.env[STATIC_DOMAIN_ENV_KEY];
@@ -37,28 +37,20 @@ export function propertyInsert() {
   const handler = async (event: awsx.apigateway.Request) => {
     const newId = uuid();
     const body = parseBody(event);
-    const date = new Date().toISOString();
+    const date = new Date();
 
     let imageKey: string | undefined;
     if (body.cover_image_base64 && body.cover_image_file_name) {
       imageKey = await uploader.uploadImage(newId, body.cover_image_base64, body.cover_image_file_name);
     }
 
-    const dynamodbItem: DynamoDB.AttributeMap = {
-      id: { S: newId },
-      name: { S: body.name || '' },
-      description: { S: body.description || '' },
-      created_date: { S: date },
-    };
-
-    if (imageKey) {
-      dynamodbItem.cover_image_key = { S: imageKey };
-    }
-
-    const response = await dynamo.putItem({
-      TableName: 'properties',
-      Item: dynamodbItem,
-    }).promise();
+    await dbModel.save({
+      id: newId,
+      created_date: date,
+      description: body.description || '',
+      name: body.name || '',
+      cover_image_key: imageKey
+    });
 
     return buildApiResponse(200, {
       id: newId,
@@ -74,6 +66,7 @@ export function propertyInsert() {
 
 export function propertyUpdate() {
   const dynamo = createDynamo();
+  const dbModel = new PropertiesDynamoModel(dynamo);
   const s3 = createS3();
   const staticBucket = process.env[STATIC_BUCKET_ENV_KEY];
   const staticDomain = process.env[STATIC_DOMAIN_ENV_KEY];
@@ -88,41 +81,30 @@ export function propertyUpdate() {
     const id = event.pathParameters ? event.pathParameters.id : '';
     const body = parseBody(event);
 
-    const search = await dynamo.getItem({
-      TableName: 'properties',
-      Key: { id: { S: id.toString() } },
-    }).promise();
+    const search = await dbModel.findById(id);
 
-    if (!search.Item) {
+    if (!search) {
       return buildNotFound();
     }
 
-    let imageKey: string | undefined = (search.Item.cover_image_key && search.Item.cover_image_key.S) || undefined;
+    let imageKey = search.cover_image_key;
     if (body.cover_image_base64 && body.cover_image_file_name) {
       imageKey = await uploader.uploadImage(id, body.cover_image_base64, body.cover_image_file_name);
     }
 
-    const dynamodbItem: DynamoDB.AttributeMap = {
-      id: { S: id },
-      name: { S: body.name || search.Item.name.S },
-      description: { S: body.description || search.Item.description.S },
-      created_date: search.Item.created_date,
-    };
-
-    if (imageKey) {
-      dynamodbItem.cover_image_key = { S: imageKey };
-    }
-
-    const response = await dynamo.putItem({
-      TableName: 'properties',
-      Item: dynamodbItem,
-    }).promise();
+    await dbModel.save({
+      id: id,
+      name: body.name || search.name,
+      description: body.description || search.description,
+      created_date: search.created_date,
+      cover_image_key: imageKey
+    });
 
     return buildApiResponse(200, {
       id,
-      name: body.name || search.Item.name.S,
-      description: body.description || search.Item.description.S,
-      created_date: search.Item.created_date.S,
+      name: body.name || search.name,
+      description: body.description || search.description,
+      created_date: search.created_date,
       cover_image_url: imageKey ? imageUrlFormatter(imageKey, staticDomain) : undefined,
     });
   };
@@ -133,6 +115,7 @@ export function propertyUpdate() {
 export function propertyGetById() {
   const dynamo = createDynamo();
   const staticDomain = process.env[STATIC_DOMAIN_ENV_KEY];
+  const dbModel = new PropertiesDynamoModel(dynamo);
 
   if (!staticDomain) {
     throw new Error('Expected staticDomain config to be present');
@@ -141,13 +124,10 @@ export function propertyGetById() {
   const handler = async (event: awsx.apigateway.Request) => {
     const id = event.pathParameters ? event.pathParameters.id : '';
 
-    const response = await dynamo.getItem({
-      TableName: 'properties',
-      Key: { id: { S: id.toString() } },
-    }).promise();
+    const property = await dbModel.findById(id);
 
-    return response.Item
-      ? buildApiResponse(200, toResponse(response.Item, (key) => imageUrlFormatter(key, staticDomain)))
+    return property
+      ? buildApiResponse(200, toResponse(property, (key) => imageUrlFormatter(key, staticDomain)))
       : buildNotFound();
   };
 
@@ -156,6 +136,8 @@ export function propertyGetById() {
 
 export function propertiesGet() {
   const dynamo = createDynamo();
+  const dbModel = new PropertiesDynamoModel(dynamo);
+
   const staticDomain = process.env[STATIC_DOMAIN_ENV_KEY];
 
   if (!staticDomain) {
@@ -163,11 +145,9 @@ export function propertiesGet() {
   }
 
   const handler = async (event: awsx.apigateway.Request) => {
-    const response = await dynamo.scan({
-      TableName: 'properties',
-    }).promise();
+    const properties = await dbModel.findAll();
 
-    const collection = response.Items ? response.Items.map((element) => toResponse(element, (key) => imageUrlFormatter(key, staticDomain))) : [];
+    const collection = properties.map((element) => toResponse(element, (key) => imageUrlFormatter(key, staticDomain)));
 
     return buildApiResponse(200, collection);
   };
