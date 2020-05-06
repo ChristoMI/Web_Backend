@@ -6,6 +6,10 @@ const domain = new aws.elasticsearch.Domain('booking-domain', {
     instanceType: 't2.small.elasticsearch',
   },
   elasticsearchVersion: '7.4',
+  ebsOptions: {
+    ebsEnabled: true,
+    volumeSize: 10,
+  },
 });
 
 export const endpoint = domain.endpoint;
