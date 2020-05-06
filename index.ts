@@ -13,6 +13,7 @@ import {
 import * as commentsRoutes from '$src/routes/comments';
 import * as profileRoutes from '$src/routes/profile';
 
+import * as import_esExports from './infrastructure/elasticsearch';
 import './infrastructure/dynamodb';
 import { staticBucket, staticDomain } from './infrastructure/staticContent';
 import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '$src/routes/settings';
@@ -446,3 +447,5 @@ export const hostsUserPoolClientId = hostsUserPoolClient.id;
 
 export const url = api.url;
 export const staticBucketName = staticBucket;
+
+export const esExports = import_esExports;
