@@ -115,22 +115,32 @@ export function updateProfile() {
       return buildApiResponse(400, { message: 'No fields for updating' });
     }
 
-    const host = await dynamo.updateItem({
-      TableName: tableName,
-      Key: {
-        id: { S: hostId },
-      },
-      ConditionExpression: 'id = :id',
-      UpdateExpression: `set ${expressions.join(', ')}`,
-      ExpressionAttributeValues: attributes,
-      ReturnValues: 'ALL_NEW',
-    }).promise();
+    const notFound = () => buildApiResponse(404, { message: 'Host not found' });
 
-    if (!host.Attributes) {
-      return buildApiResponse(404, { message: 'Host not found' });
+    try {
+      const host = await dynamo.updateItem({
+        TableName: tableName,
+        Key: {
+          id: { S: hostId },
+        },
+        ConditionExpression: 'id = :id',
+        UpdateExpression: `set ${expressions.join(', ')}`,
+        ExpressionAttributeValues: attributes,
+        ReturnValues: 'ALL_NEW',
+      }).promise();
+
+      if (!host.Attributes) {
+        return notFound();
+      }
+
+      return buildApiResponse(200, toResponse(host.Attributes, staticDomain));
+    } catch (err) {
+      if (err.code === 'ConditionalCheckFailedException') {
+        return notFound();
+      }
+
+      throw err;
     }
-
-    return buildApiResponse(200, toResponse(host.Attributes!, staticDomain));
   };
 
   return add500Handler(handler);
