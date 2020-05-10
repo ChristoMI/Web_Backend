@@ -4,7 +4,9 @@ import { DynamoDB } from 'aws-sdk';
 export interface Property {
     id: string;
     name: string;
-    address: string;
+    city?: string;
+    country?: string;
+    address?: string;
     opportunities: string[];
     landmarks: PropertyLandmark[];
     price: number;
@@ -49,6 +51,8 @@ export class PropertiesDynamoModel {
         created_date: new Date(attributes.created_date.S!),
         cover_image_key: attributes.cover_image_key && attributes.cover_image_key.S,
         address: attributes.address ? attributes.address.S! : '',
+        city: attributes.city ? attributes.city.S! : '',
+        country: attributes.country ? attributes.country.S! : '',
         property_images: attributes.property_images ? attributes.property_images.L!.map((i) => ({
           id: +i.M!.id.N!,
           image_key: i.M!.image_key.S!,
@@ -72,11 +76,22 @@ export class PropertiesDynamoModel {
           })),
         },
         price: { N: property.price.toString() },
-        address: { S: property.address },
         landmarks: {
           L: property.landmarks.map(l => ({ M: { name: { S: l.name }, distance: { N: l.distance.toString() } } })),
         },
       };
+
+      if (property.address) {
+        item.address = { S: property.address };
+      }
+
+      if (property.city) {
+        item.city = { S: property.city };
+      }
+
+      if (property.country) {
+        item.country = { S: property.country };
+      }
 
       if (property.opportunities.length) {
         item.opportunities = { SS: property.opportunities };

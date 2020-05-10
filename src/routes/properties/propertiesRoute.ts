@@ -25,7 +25,9 @@ export interface PropertyApiResponse {
   created_date: string,
   cover_image_url?: string,
   images: PropertyImageApiResponse[];
-  address: string;
+  address?: string;
+  country?: string;
+  city?: string;
   opportunities: string[];
   landmarks: PropertyLandmarkApiResponse[];
   price: number;
@@ -43,6 +45,8 @@ function toResponse(property: Property, toUrl: (key: string) => string): Propert
       url: toUrl(img.image_key),
     })),
     address: property.address,
+    city: property.city,
+    country: property.country,
     landmarks: property.landmarks,
     opportunities: property.opportunities,
     price: property.price,
@@ -69,7 +73,8 @@ export function propertyInsert() {
   const handler = async (event: awsx.apigateway.Request) => {
     const newId = uuid();
     const {
-      description, name, address, landmarks, opportunities, price, cover_image_base64, cover_image_file_name,
+      description, name, address, city, country, landmarks, opportunities, price,
+      cover_image_base64, cover_image_file_name,
     } = parseBody(event);
     const date = new Date();
 
@@ -91,7 +96,9 @@ export function propertyInsert() {
       name: name.toString(),
       cover_image_key: imageKey,
       property_images: [],
-      address: address || 'NONE',
+      address,
+      city,
+      country,
       landmarks: landmarks || [],
       opportunities: opportunities || [],
       price: +price,
@@ -121,7 +128,8 @@ export function propertyUpdate() {
   const handler = async (event: awsx.apigateway.Request) => {
     const id = event.pathParameters ? event.pathParameters.id : '';
     const {
-      name, description, address, landmarks, opportunities, price, cover_image_base64, cover_image_file_name,
+      name, description, address, country, city, landmarks, opportunities, price,
+      cover_image_base64, cover_image_file_name,
     } = parseBody(event);
 
     const search = await dbModel.findById(id);
@@ -143,6 +151,8 @@ export function propertyUpdate() {
       cover_image_key: imageKey,
       property_images: [],
       address: address || search.address,
+      country: country || search.country,
+      city: city || search.city,
       landmarks: landmarks || search.landmarks,
       opportunities: opportunities || search.opportunities,
       price: price || search.price,
