@@ -50,9 +50,9 @@ export class PropertiesDynamoModel {
         description: attributes.description.S!,
         created_date: new Date(attributes.created_date.S!),
         cover_image_key: attributes.cover_image_key && attributes.cover_image_key.S,
-        address: attributes.address ? attributes.address.S! : '',
-        city: attributes.city ? attributes.city.S! : '',
-        country: attributes.country ? attributes.country.S! : '',
+        address: attributes.address ? attributes.address.S! : undefined,
+        city: attributes.city ? attributes.city.S! : undefined,
+        country: attributes.country ? attributes.country.S! : undefined,
         property_images: attributes.property_images ? attributes.property_images.L!.map((i) => ({
           id: +i.M!.id.N!,
           image_key: i.M!.image_key.S!,
