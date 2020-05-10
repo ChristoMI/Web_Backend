@@ -11,9 +11,9 @@ function toResponse(entry: DynamoDB.AttributeMap, staticDomain: string) {
   return {
     id: entry.id.S,
     username: entry.username.S,
-    email: entry.email.S,
-    firstName: entry.firstName.S,
-    lastName: entry.lastName.S,
+    email: entry.email && entry.email.S,
+    firstName: entry.firstName && entry.firstName.S,
+    lastName: entry.lastName && entry.lastName.S,
     avatarUrl: (entry.avatarKey && imageUrlFormatter(entry.avatarKey.S!, staticDomain))
       || (entry.avatarUrl && entry.avatarUrl.S),
     createdAt: entry.createdAt.S,
@@ -115,22 +115,22 @@ export function updateProfile() {
       return buildApiResponse(400, { message: 'No fields for updating' });
     }
 
-    try {
-      const host = await dynamo.updateItem({
-        TableName: tableName,
-        Key: {
-          id: { S: hostId },
-        },
-        ConditionExpression: 'id = :id',
-        UpdateExpression: `set ${expressions.join(', ')}`,
-        ExpressionAttributeValues: attributes,
-        ReturnValues: 'ALL_NEW',
-      }).promise();
+    const host = await dynamo.updateItem({
+      TableName: tableName,
+      Key: {
+        id: { S: hostId },
+      },
+      ConditionExpression: 'id = :id',
+      UpdateExpression: `set ${expressions.join(', ')}`,
+      ExpressionAttributeValues: attributes,
+      ReturnValues: 'ALL_NEW',
+    }).promise();
 
-      return buildApiResponse(200, toResponse(host.Attributes!, staticDomain));
-    } catch (e) {
+    if (!host.Attributes) {
       return buildApiResponse(404, { message: 'Host not found' });
     }
+
+    return buildApiResponse(200, toResponse(host.Attributes!, staticDomain));
   };
 
   return add500Handler(handler);
