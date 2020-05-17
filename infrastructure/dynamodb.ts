@@ -68,3 +68,29 @@ export const host = new aws.dynamodb.Table('host', {
   readCapacity: 1,
   writeCapacity: 1,
 });
+
+export const reservation = new aws.dynamodb.Table('reservation', {
+  name: 'reservation',
+  rangeKey: 'id',
+  hashKey: 'customerId',
+  globalSecondaryIndexes: [{
+    name: 'reservation-by-property-id',
+    rangeKey: 'id',
+    hashKey: 'propertyId',
+    readCapacity: 1,
+    writeCapacity: 1,
+    projectionType: 'ALL',
+  }],
+  attributes: [{
+    name: 'id',
+    type: 'S',
+  }, {
+    name: 'customerId',
+    type: 'S',
+  }, {
+    name: 'propertyId',
+    type: 'S',
+  }],
+  readCapacity: 1,
+  writeCapacity: 1,
+});

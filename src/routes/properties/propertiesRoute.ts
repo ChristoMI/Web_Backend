@@ -21,6 +21,7 @@ export interface PropertyLandmarkApiResponse {
 export interface PropertyApiResponse {
   id: string,
   name: string,
+  totalRoomsNumber: number,
   description: string,
   created_date: string,
   cover_image_url?: string,
@@ -37,6 +38,7 @@ function toResponse(property: Property, toUrl: (key: string) => string): Propert
   return {
     id: property.id,
     name: property.name,
+    totalRoomsNumber: property.totalRoomsNumber,
     description: property.description,
     created_date: property.created_date.toISOString(),
     cover_image_url: property.cover_image_key && toUrl(property.cover_image_key),
@@ -74,7 +76,7 @@ export function propertyInsert() {
     const newId = uuid();
     const {
       description, name, address, city, country, landmarks, opportunities, price,
-      cover_image_base64, cover_image_file_name,
+      cover_image_base64, cover_image_file_name, totalRoomsNumber,
     } = parseBody(event);
     const date = new Date();
 
@@ -94,6 +96,7 @@ export function propertyInsert() {
       created_date: date,
       description: description.toString(),
       name: name.toString(),
+      totalRoomsNumber: totalRoomsNumber ? +totalRoomsNumber : 1,
       cover_image_key: imageKey,
       property_images: [],
       address,
@@ -146,6 +149,7 @@ export function propertyUpdate() {
     const property: Property = {
       id,
       name: name || search.name,
+      totalRoomsNumber: search.totalRoomsNumber,
       description: description || search.description,
       created_date: search.created_date,
       cover_image_key: imageKey,

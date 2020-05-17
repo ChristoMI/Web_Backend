@@ -67,6 +67,7 @@ export const hostPostConfirmationEvent = {
 export function createRequest({
   body = {},
   pathParameters = {},
+  queryStringParameters = {},
   sub = '',
 }) {
   return {
@@ -77,7 +78,7 @@ export function createRequest({
     isBase64Encoded: false,
     path: '',
     pathParameters,
-    queryStringParameters: {},
+    queryStringParameters,
     multiValueQueryStringParameters: {},
     stageVariables: {},
     requestContext: {

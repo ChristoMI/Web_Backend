@@ -12,6 +12,7 @@ import {
 } from './src/routes/properties/propertiesRoute';
 import * as commentsRoutes from '$src/routes/comments';
 import * as profileRoutes from '$src/routes/profile';
+import * as reservationRoutes from '$src/routes/reservation';
 
 import * as import_esExports from './infrastructure/elasticsearch';
 import './infrastructure/dynamodb';
@@ -378,6 +379,76 @@ let routes: Route[] = [{
     memorySize: defaultMemorySize,
   }),
 },
+{
+  path: '/reservation',
+  method: 'POST',
+  authorizers: cognitoAuthorizerCustomers,
+  eventHandler: new aws.lambda.CallbackFunction('createReservation', {
+    callbackFactory: reservationRoutes.createReservation,
+    reservedConcurrentExecutions: defaultConcurrentExecutions,
+    tracingConfig: {
+      mode: 'Active',
+    },
+    environment,
+    memorySize: defaultMemorySize
+  }),
+},
+{
+  path: '/reservation/{id}',
+  method: 'DELETE',
+  requiredParameters: [{
+    in: 'path',
+    name: 'id'
+  }],
+  authorizers: cognitoAuthorizerCustomers,
+  eventHandler: new aws.lambda.CallbackFunction('deleteReservation', {
+    callbackFactory: reservationRoutes.deleteReservation,
+    reservedConcurrentExecutions: defaultConcurrentExecutions,
+    tracingConfig: {
+      mode: 'Active',
+    },
+    environment,
+    memorySize: defaultMemorySize
+  }),
+},
+{
+  path: '/customers/reservation',
+  method: 'GET',
+  authorizers: cognitoAuthorizerCustomers,
+  eventHandler: new aws.lambda.CallbackFunction('getCustomerReservations', {
+    callbackFactory: reservationRoutes.getCustomerReservations,
+    reservedConcurrentExecutions: defaultConcurrentExecutions,
+    tracingConfig: {
+      mode: 'Active',
+    },
+    environment,
+    memorySize: defaultMemorySize
+  }),
+},
+{
+  path: '/properties/{id}/reservation/available-count',
+  method: 'GET',
+  requiredParameters: [{
+    in: 'path',
+    name: 'id',
+  }, {
+    in: 'query',
+    name: 'beginDate',
+  }, {
+    in: 'query',
+    name: 'endDate',
+  }],
+  authorizers: cognitoAuthorizerCustomers,
+  eventHandler: new aws.lambda.CallbackFunction('getAvailableCountReservations', {
+    callbackFactory: reservationRoutes.getAvailableCountReservations,
+    reservedConcurrentExecutions: defaultConcurrentExecutions,
+    tracingConfig: {
+      mode: 'Active',
+    },
+    environment,
+    memorySize: defaultMemorySize
+  }),
+}
 ];
 
 function addCors(corsRoutes: Route[]) {

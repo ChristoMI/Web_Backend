@@ -4,6 +4,7 @@ import { DynamoDB } from 'aws-sdk';
 export interface Property {
     id: string;
     name: string;
+    totalRoomsNumber: number;
     city?: string;
     country?: string;
     address?: string;
@@ -40,6 +41,7 @@ export class PropertiesDynamoModel {
       return {
         id: attributes.id.S!,
         name: attributes.name.S!,
+        totalRoomsNumber: attributes.totalRoomsNumber ? +attributes.totalRoomsNumber.N! : 1,
         price: attributes.price ? +attributes.price.N! : 0,
         opportunities: attributes.opportunities ? attributes.opportunities.SS! : [],
         landmarks: attributes.landmarks ? attributes.landmarks.L!.map(l => ({
@@ -65,6 +67,7 @@ export class PropertiesDynamoModel {
       const item: DynamoDB.AttributeMap = {
         id: { S: property.id },
         name: { S: property.name },
+        totalRoomsNumber: { N: String(property.totalRoomsNumber) },
         description: { S: property.description },
         created_date: { S: property.created_date.toISOString() },
         property_images: {
