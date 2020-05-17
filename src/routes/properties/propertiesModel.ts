@@ -16,6 +16,7 @@ export interface Property {
     cover_image_key?: string;
     property_images: PropertyImage[];
     ratings: PropertyRating[];
+    isConfirmed: boolean;
 }
 
 export interface PropertyRating {
@@ -70,6 +71,7 @@ export class PropertiesDynamoModel {
           customerId: r.M!.customerId.S!,
           rating: +r.M!.rating.N!,
         })) : [],
+        isConfirmed: attributes.isConfirmed ? attributes.isConfirmed.BOOL! : false,
       };
     }
 
@@ -91,6 +93,7 @@ export class PropertiesDynamoModel {
         landmarks: {
           L: property.landmarks.map(l => ({ M: { name: { S: l.name }, distance: { N: l.distance.toString() } } })),
         },
+        isConfirmed: { BOOL: property.isConfirmed || false },
       };
 
       if (property.address) {

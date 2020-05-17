@@ -4,7 +4,7 @@ import { expect } from 'chai';
 import '../configTestEnvironment';
 import { createRequestFromBlueprint } from '../testApiGatewayRequest';
 import {
-  propertyInsert, propertyUpdate, propertyGetById, propertiesGet,
+  propertyInsert, propertyUpdate, propertyGetById, propertiesGet, propertyConfirm,
   propertyAddImage, propertyRemoveImage, propertyReorderImages, propertyRate,
 } from '../../src/routes/properties/propertiesRoute';
 import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '$src/routes/settings';
@@ -266,6 +266,54 @@ describe('propertiesRoute route', () => {
 
       expect(body.ratings.length).to.be.equal(3);
       expect(body.rating).to.be.equal(5);
+    });
+  });
+
+  describe('confirm property', async () => {
+    it('should return unconfirmed property', async () => {
+      const result = await propertyInsert()(createRequestFromBlueprint({
+        name: 'LOL',
+        description: 'KEK',
+        address: 'SOme street',
+        opportunities: ['opp1', 'opp2'],
+        landmarks: [{
+          name: 'l1',
+          distance: 12,
+        }],
+        price: 200,
+      }));
+
+      assertOkResult(result);
+
+      const body = JSON.parse(result.body);
+
+      expect(body.isConfirmed).to.be.equal(false);
+    });
+
+    it('should return confirmed property', async () => {
+      const resultInsert = await propertyInsert()(createRequestFromBlueprint({
+        name: 'LOL',
+        description: 'KEK',
+        address: 'SOme street',
+        opportunities: ['opp1', 'opp2'],
+        landmarks: [{
+          name: 'l1',
+          distance: 12,
+        }],
+        price: 200,
+      }));
+
+      assertOkResult(resultInsert);
+
+      const property = JSON.parse(resultInsert.body);
+
+      const result = await propertyConfirm()(createRequestFromBlueprint({}, { id: property.id }));
+
+      assertOkResult(result);
+
+      const body = JSON.parse(result.body);
+
+      expect(body.isConfirmed).to.be.equal(true);
     });
   });
 });

@@ -9,7 +9,7 @@ import { testRouteGet, testRouteCreate } from './src/routes/testRoute';
 
 import {
   propertyInsert, propertyUpdate, propertyRate, propertyGetById, propertiesGet,
-  propertyAddImage, propertyRemoveImage, propertyReorderImages,
+  propertyAddImage, propertyRemoveImage, propertyReorderImages, propertyConfirm,
 } from './src/routes/properties/propertiesRoute';
 import * as commentsRoutes from '$src/routes/comments';
 import * as profileRoutes from '$src/routes/profile';
@@ -272,6 +272,22 @@ let routes: Route[] = [{
   authorizers: cognitoAuthorizerCustomers,
   eventHandler: new aws.lambda.CallbackFunction('propertyRate', {
     callbackFactory: propertyRate,
+    reservedConcurrentExecutions: defaultConcurrentExecutions,
+    tracingConfig: {
+      mode: 'Active',
+    },
+    environment,
+    memorySize: defaultMemorySize,
+  }),
+},
+{
+  path: '/properties/{id}/confirm',
+  method: 'PUT',
+  requiredParameters: [
+    { in: 'path', name: 'id' },
+  ],
+  eventHandler: new aws.lambda.CallbackFunction('propertyConfirm', {
+    callbackFactory: propertyConfirm,
     reservedConcurrentExecutions: defaultConcurrentExecutions,
     tracingConfig: {
       mode: 'Active',

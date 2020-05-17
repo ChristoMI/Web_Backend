@@ -39,6 +39,7 @@ export interface PropertyApiResponse {
   price: number;
   ratings: PropertyRatingApiResponse[];
   rating: number;
+  isConfirmed: boolean;
 }
 
 function toResponse(property: Property, toUrl: (key: string) => string): PropertyApiResponse {
@@ -63,6 +64,7 @@ function toResponse(property: Property, toUrl: (key: string) => string): Propert
     rating: property.ratings.length
       ? Math.round(property.ratings.reduce((c, r) => c + r.rating, 0) / property.ratings.length)
       : 0,
+    isConfirmed: property.isConfirmed,
   };
 }
 
@@ -117,6 +119,7 @@ export function propertyInsert() {
       opportunities: opportunities || [],
       price: +price,
       ratings: [],
+      isConfirmed: false,
     };
 
     await dbModel.save(property);
@@ -173,6 +176,7 @@ export function propertyUpdate() {
       opportunities: opportunities || search.opportunities,
       price: price || search.price,
       ratings: search.ratings,
+      isConfirmed: search.isConfirmed,
     };
 
     await dbModel.save(property);
@@ -381,6 +385,39 @@ export function propertyRate() {
         customerId,
         rating: +body.rating,
       }),
+    };
+
+    await dbModel.save(property);
+
+    return buildApiResponse(200, toResponse(property, (key) => imageUrlFormatter(key, staticDomain)));
+  };
+
+  return add500Handler(handler);
+}
+
+export function propertyConfirm() {
+  const dynamo = createDynamo();
+  const dbModel = new PropertiesDynamoModel(dynamo);
+
+  const staticDomain = process.env[STATIC_DOMAIN_ENV_KEY];
+
+  if (!staticDomain) {
+    throw new Error('Expected staticDomain config to be present');
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handler = async (event: awsx.apigateway.Request) => {
+    const propertyId = event.pathParameters!.id;
+
+    const search = await dbModel.findById(propertyId);
+
+    if (!search) {
+      return buildNotFound();
+    }
+
+    const property: Property = {
+      ...search,
+      isConfirmed: true,
     };
 
     await dbModel.save(property);
