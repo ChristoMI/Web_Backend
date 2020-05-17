@@ -156,6 +156,12 @@ export function propertyUpdate() {
       return buildNotFound();
     }
 
+    if (!search.isConfirmed) {
+      return buildApiResponse(403, {
+        message: 'Property not confirmed'
+      });
+    }
+
     let imageKey = search.cover_image_key;
     if (cover_image_base64 && cover_image_file_name) {
       imageKey = await uploader.uploadImage(id, cover_image_base64, cover_image_file_name);
@@ -201,9 +207,17 @@ export function propertyGetById() {
 
     const property = await dbModel.findById(id);
 
-    return property
-      ? buildApiResponse(200, toResponse(property, (key) => imageUrlFormatter(key, staticDomain)))
-      : buildNotFound();
+    if (!property) {
+      return buildNotFound();
+    }
+
+    if (!property.isConfirmed) {
+      return buildApiResponse(403, {
+        message: 'Property not confirmed'
+      });
+    }
+
+    return buildApiResponse(200, toResponse(property, (key) => imageUrlFormatter(key, staticDomain)));
   };
 
   return add500Handler(handler);
@@ -347,7 +361,9 @@ export function propertiesGet() {
   const handler = async (event: awsx.apigateway.Request) => {
     const properties = await dbModel.findAll();
 
-    const collection = properties.map((element) => toResponse(element, (key) => imageUrlFormatter(key, staticDomain)));
+    const collection = properties
+      .filter((p) => p.isConfirmed)
+      .map((p) => toResponse(p, (key) => imageUrlFormatter(key, staticDomain)));
 
     return buildApiResponse(200, collection);
   };
@@ -377,6 +393,12 @@ export function propertyRate() {
 
     if (!search) {
       return buildNotFound();
+    }
+
+    if (!search.isConfirmed) {
+      return buildApiResponse(403, {
+        message: 'Property not confirmed'
+      });
     }
 
     const property: Property = {
@@ -413,6 +435,12 @@ export function propertyConfirm() {
 
     if (!search) {
       return buildNotFound();
+    }
+
+    if (search.isConfirmed) {
+      return buildApiResponse(403, {
+        message: 'Property already confirmed'
+      });
     }
 
     const property: Property = {

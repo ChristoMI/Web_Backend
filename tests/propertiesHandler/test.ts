@@ -12,6 +12,10 @@ import { assertOkResult } from '$tests/assertHelpers';
 
 import stubs = require('$tests/profileHandler/stubs');
 
+export function confirmProperty(propertyId: String) {
+  return propertyConfirm()(createRequestFromBlueprint({}, { id: propertyId }));
+}
+
 describe('propertiesRoute route', () => {
   before(() => {
     process.env[STATIC_BUCKET_ENV_KEY] = 'testbucket';
@@ -85,6 +89,9 @@ describe('propertiesRoute route', () => {
     assertOkResult(result);
 
     const id = JSON.parse(result.body).id;
+
+    await confirmProperty(id);
+
     const getResult = await propertyGetById()(createRequestFromBlueprint({}, { id }));
     assertOkResult(getResult);
 
@@ -96,6 +103,9 @@ describe('propertiesRoute route', () => {
     assertOkResult(result);
 
     const id = JSON.parse(result.body).id;
+
+    await confirmProperty(id);
+
     const getResult = await propertyGetById()(createRequestFromBlueprint({}, { id }));
     assertOkResult(getResult);
     expect(JSON.parse(getResult.body).id).to.be.equal(id);
@@ -125,6 +135,9 @@ describe('propertiesRoute route', () => {
     const created = JSON.parse(postResult.body);
 
     const id = created.id;
+
+    await confirmProperty(id);
+
     const putResult = await propertyUpdate()(createRequestFromBlueprint({
       name: 'Another LOL',
       address: 'SOme street1',
@@ -228,6 +241,8 @@ describe('propertiesRoute route', () => {
 
       const property = JSON.parse(resultInsert.body);
 
+      await confirmProperty(property.id);
+
       const result = await propertyRate()(createRequestFromBlueprint({ rating: 5 }, { id: property.id }, stubs.customer.id));
 
       assertOkResult(result);
@@ -254,6 +269,8 @@ describe('propertiesRoute route', () => {
       assertOkResult(resultInsert);
 
       const property = JSON.parse(resultInsert.body);
+
+      await confirmProperty(property.id);
 
       const result1 = await propertyRate()(createRequestFromBlueprint({ rating: 5 }, { id: property.id }, stubs.customer.id));
       assertOkResult(result1);
