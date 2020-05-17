@@ -67,7 +67,6 @@ export class PropertiesDynamoModel {
       const item: DynamoDB.AttributeMap = {
         id: { S: property.id },
         name: { S: property.name },
-        totalRoomsNumber: { N: String(property.totalRoomsNumber) },
         description: { S: property.description },
         created_date: { S: property.created_date.toISOString() },
         property_images: {
@@ -102,6 +101,10 @@ export class PropertiesDynamoModel {
 
       if (property.cover_image_key) {
         item.cover_image_key = { S: property.cover_image_key };
+      }
+
+      if (property.totalRoomsNumber) {
+        item.totalRoomsNumber = { N: String(property.totalRoomsNumber) };
       }
 
       await this.dynamodb.putItem({
