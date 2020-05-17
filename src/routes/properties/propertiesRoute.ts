@@ -6,7 +6,7 @@ import {
   parseBody, buildApiResponse, add500Handler, buildBadRequestResponse, getUserId,
 } from '$src/apiGatewayUtilities';
 import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '../settings';
-import { PropertiesDynamoModel, Property } from './propertiesModel';
+import { PropertiesDynamoModel, Property, PropertyRating } from './propertiesModel';
 
 export interface PropertyImageApiResponse {
   id: number,
@@ -16,11 +16,6 @@ export interface PropertyImageApiResponse {
 export interface PropertyLandmarkApiResponse {
   name: string;
   distance: number;
-}
-
-export interface PropertyRatingApiResponse {
-  customerId: string;
-  rating: number;
 }
 
 export interface PropertyApiResponse {
@@ -37,9 +32,12 @@ export interface PropertyApiResponse {
   opportunities: string[];
   landmarks: PropertyLandmarkApiResponse[];
   price: number;
-  ratings: PropertyRatingApiResponse[];
   rating: number;
   isConfirmed: boolean;
+}
+
+export function getPropertyRating(ratings: PropertyRating[]) {
+  return ratings.length ? Math.round(ratings.reduce((c: number, r: PropertyRating) => c + r.rating, 0) / ratings.length) : 0;
 }
 
 function toResponse(property: Property, toUrl: (key: string) => string): PropertyApiResponse {
@@ -60,10 +58,7 @@ function toResponse(property: Property, toUrl: (key: string) => string): Propert
     landmarks: property.landmarks,
     opportunities: property.opportunities,
     price: property.price,
-    ratings: property.ratings,
-    rating: property.ratings.length
-      ? Math.round(property.ratings.reduce((c, r) => c + r.rating, 0) / property.ratings.length)
-      : 0,
+    rating: getPropertyRating(property.ratings),
     isConfirmed: property.isConfirmed,
   };
 }

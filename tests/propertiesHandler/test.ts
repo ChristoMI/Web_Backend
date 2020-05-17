@@ -249,7 +249,6 @@ describe('propertiesRoute route', () => {
 
       const body = JSON.parse(result.body);
 
-      expect(body.ratings.length).to.be.equal(1);
       expect(body.rating).to.be.equal(5);
     });
 
@@ -281,7 +280,6 @@ describe('propertiesRoute route', () => {
 
       const body = JSON.parse(result3.body);
 
-      expect(body.ratings.length).to.be.equal(3);
       expect(body.rating).to.be.equal(5);
     });
   });

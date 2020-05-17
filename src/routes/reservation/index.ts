@@ -3,9 +3,8 @@
 import * as awsx from '@pulumi/awsx';
 import { v4 as uuidv4 } from 'uuid';
 import { DynamoDB } from 'aws-sdk';
-import {
-  marshall, parseBody, query, buildApiResponse, add500Handler, getUserId
-} from '$src/apiGatewayUtilities';
+import { marshall, parseBody, buildApiResponse, add500Handler, getUserId } from '$src/apiGatewayUtilities';
+import { query } from '$src/dynamodb/utils';
 import { createDynamo } from '$src/initAWS';
 
 function toResponse(entry: DynamoDB.AttributeMap) {
