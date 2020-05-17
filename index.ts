@@ -8,7 +8,8 @@ import { Route } from '@pulumi/awsx/apigateway/api';
 import { testRouteGet, testRouteCreate } from './src/routes/testRoute';
 
 import {
-  propertyInsert, propertyUpdate, propertyGetById, propertiesGet, propertyAddImage, propertyRemoveImage, propertyReorderImages,
+  propertyInsert, propertyUpdate, propertyRate, propertyGetById, propertiesGet,
+  propertyAddImage, propertyRemoveImage, propertyReorderImages,
 } from './src/routes/properties/propertiesRoute';
 import * as commentsRoutes from '$src/routes/comments';
 import * as profileRoutes from '$src/routes/profile';
@@ -253,6 +254,24 @@ let routes: Route[] = [{
   ],
   eventHandler: new aws.lambda.CallbackFunction('propertyGetById', {
     callbackFactory: propertyGetById,
+    reservedConcurrentExecutions: defaultConcurrentExecutions,
+    tracingConfig: {
+      mode: 'Active',
+    },
+    environment,
+    memorySize: defaultMemorySize,
+  }),
+},
+{
+  path: '/properties/{id}/rate',
+  method: 'PUT',
+  requiredParameters: [{
+    in: 'path',
+    name: 'id'
+  }],
+  authorizers: cognitoAuthorizerCustomers,
+  eventHandler: new aws.lambda.CallbackFunction('propertyRate', {
+    callbackFactory: propertyRate,
     reservedConcurrentExecutions: defaultConcurrentExecutions,
     tracingConfig: {
       mode: 'Active',

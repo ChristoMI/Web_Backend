@@ -15,6 +15,12 @@ export interface Property {
     created_date: Date;
     cover_image_key?: string;
     property_images: PropertyImage[];
+    ratings: PropertyRating[];
+}
+
+export interface PropertyRating {
+  customerId: string;
+  rating: number;
 }
 
 export interface PropertyLandmark {
@@ -60,6 +66,10 @@ export class PropertiesDynamoModel {
           image_key: i.M!.image_key.S!,
         }))
           : [],
+        ratings: attributes.ratings ? attributes.ratings.L!.map((r) => ({
+          customerId: r.M!.customerId.S!,
+          rating: +r.M!.rating.N!,
+        })) : [],
       };
     }
 
@@ -105,6 +115,17 @@ export class PropertiesDynamoModel {
 
       if (property.totalRoomsNumber) {
         item.totalRoomsNumber = { N: String(property.totalRoomsNumber) };
+      }
+
+      if (property.ratings) {
+        item.ratings = {
+          L: property.ratings.map((r) => ({
+            M: {
+              customerId: { S: r.customerId },
+              rating: { N: String(r.rating) },
+            },
+          })),
+        };
       }
 
       await this.dynamodb.putItem({

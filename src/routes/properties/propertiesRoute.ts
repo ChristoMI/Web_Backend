@@ -3,7 +3,7 @@ import * as uuid from 'uuid';
 import { createDynamo, createS3 } from '../../initAWS';
 import { ImageService, imageUrlFormatter } from '../../propertyImageService';
 import {
-  parseBody, buildApiResponse, add500Handler, buildBadRequestResponse,
+  parseBody, buildApiResponse, add500Handler, buildBadRequestResponse, getUserId,
 } from '$src/apiGatewayUtilities';
 import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '../settings';
 import { PropertiesDynamoModel, Property } from './propertiesModel';
@@ -16,6 +16,11 @@ export interface PropertyImageApiResponse {
 export interface PropertyLandmarkApiResponse {
   name: string;
   distance: number;
+}
+
+export interface PropertyRatingApiResponse {
+  customerId: string;
+  rating: number;
 }
 
 export interface PropertyApiResponse {
@@ -32,6 +37,8 @@ export interface PropertyApiResponse {
   opportunities: string[];
   landmarks: PropertyLandmarkApiResponse[];
   price: number;
+  ratings: PropertyRatingApiResponse[];
+  rating: number;
 }
 
 function toResponse(property: Property, toUrl: (key: string) => string): PropertyApiResponse {
@@ -52,6 +59,10 @@ function toResponse(property: Property, toUrl: (key: string) => string): Propert
     landmarks: property.landmarks,
     opportunities: property.opportunities,
     price: property.price,
+    ratings: property.ratings,
+    rating: property.ratings.length
+      ? Math.round(property.ratings.reduce((c, r) => c + r.rating, 0) / property.ratings.length)
+      : 0,
   };
 }
 
@@ -105,6 +116,7 @@ export function propertyInsert() {
       landmarks: landmarks || [],
       opportunities: opportunities || [],
       price: +price,
+      ratings: [],
     };
 
     await dbModel.save(property);
@@ -160,6 +172,7 @@ export function propertyUpdate() {
       landmarks: landmarks || search.landmarks,
       opportunities: opportunities || search.opportunities,
       price: price || search.price,
+      ratings: search.ratings,
     };
 
     await dbModel.save(property);
@@ -333,6 +346,46 @@ export function propertiesGet() {
     const collection = properties.map((element) => toResponse(element, (key) => imageUrlFormatter(key, staticDomain)));
 
     return buildApiResponse(200, collection);
+  };
+
+  return add500Handler(handler);
+}
+
+export function propertyRate() {
+  const dynamo = createDynamo();
+  const dbModel = new PropertiesDynamoModel(dynamo);
+
+  const staticDomain = process.env[STATIC_DOMAIN_ENV_KEY];
+
+  if (!staticDomain) {
+    throw new Error('Expected staticDomain config to be present');
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handler = async (event: awsx.apigateway.Request) => {
+    const customerId = getUserId(event);
+
+    const propertyId = event.pathParameters!.id;
+
+    const body = parseBody(event);
+
+    const search = await dbModel.findById(propertyId);
+
+    if (!search) {
+      return buildNotFound();
+    }
+
+    const property: Property = {
+      ...search,
+      ratings: search.ratings.concat({
+        customerId,
+        rating: +body.rating,
+      }),
+    };
+
+    await dbModel.save(property);
+
+    return buildApiResponse(200, toResponse(property, (key) => imageUrlFormatter(key, staticDomain)));
   };
 
   return add500Handler(handler);
