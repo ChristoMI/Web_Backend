@@ -20,6 +20,7 @@ jobs:
   preview:
     name: Preview
     runs-on: ubuntu-latest
+    if: "false" # This spams the PR requests
     steps:
       - uses: actions/checkout@v2
         with:
