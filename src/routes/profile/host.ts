@@ -57,6 +57,7 @@ export function getProfile() {
 
   const handler = async (event: apigateway.Request) => {
     const hostId = getUserId(event);
+    console.log(hostId);
 
     const host = await dynamo.getItem({
       TableName: tableName,

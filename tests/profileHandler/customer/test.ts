@@ -9,10 +9,6 @@ import routes = require('$src/routes/profile/customer');
 import stubs = require('../stubs');
 
 describe('profile:customer', () => {
-  before(async () => {
-    await routes.createProfile()(stubs.customerPostConfirmationEvent, {}, () => {});
-  });
-
   it('should return customer profile', async () => {
     const request = stubs.createRequest({
       sub: stubs.customer.id,

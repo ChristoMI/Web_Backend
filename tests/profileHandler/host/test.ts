@@ -9,11 +9,7 @@ import routes = require('$src/routes/profile/host');
 import stubs = require('../stubs');
 
 describe('profile:host', () => {
-  before(async () => {
-    await routes.createProfile()(stubs.hostPostConfirmationEvent, {}, () => {});
-  });
-
-  it('should return host profile', async () => {
+  it('0 - should return host profile', async () => {
     const request = stubs.createRequest({
       sub: stubs.host.id,
     });

@@ -1,3 +1,5 @@
+import * as stubs from './profileHandler/stubs';
+
 const template = () => ({
   body: '',
   headers: {},
@@ -48,6 +50,6 @@ export function createRequestFromBlueprint(body: object, pathParams = {}, sub = 
   const instance = template();
   instance.body = JSON.stringify(body);
   instance.pathParameters = pathParams;
-  instance.requestContext.authorizer.claims.sub = sub;
+  instance.requestContext.authorizer.claims.sub = sub || stubs.host.id;
   return instance;
 }

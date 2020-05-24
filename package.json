@@ -3,7 +3,7 @@
     "scripts": {
         "eslint": "eslint . --ext .ts",
         "eslint-fix": "eslint . --ext .ts --fix",
-        "test": "mocha -r ts-node/register 'tests/**/test.ts'",
+        "test": "mocha --file ./tests/globalTestSetup.ts -r ts-node/register 'tests/**/test.ts'",
         "initLocal": "ts-node tests/setup/initEnvironment.ts"
     },
     "devDependencies": {
