@@ -3,10 +3,11 @@
 import * as awsx from '@pulumi/awsx';
 import { v4 as uuidv4 } from 'uuid';
 import { DynamoDB } from 'aws-sdk';
-import { marshall, parseBody, buildApiResponse, add500Handler, getUserId } from '$src/apiGatewayUtilities';
+import {
+  marshall, parseBody, buildApiResponse, add500Handler, getUserId,
+} from '$src/apiGatewayUtilities';
 import { query } from '$src/dynamodb/utils';
 import { createDynamo } from '$src/initAWS';
-import { PropertiesDynamoModel, Property, PropertyRating } from '../properties/propertiesModel';
 
 function toResponse(entry: DynamoDB.AttributeMap) {
   return {
@@ -50,10 +51,10 @@ function splitRange(beginDate: Date, endDate: Date) {
   const dates = [];
   const currDate = new Date(beginDate);
 
-  while (currDate < endDate){
+  while (currDate < endDate) {
     dates.push(new Date(currDate));
     currDate.setDate(currDate.getDate() + 1);
-  };
+  }
 
   dates.push(new Date(endDate));
 
@@ -186,7 +187,7 @@ export function createReservation() {
 
     if (availableRoomsCount < bookedRoomsNumber) {
       return buildApiResponse(400, {
-        message: `Not enough rooms, available rooms count: ${availableRoomsCount}`
+        message: `Not enough rooms, available rooms count: ${availableRoomsCount}`,
       });
     }
 

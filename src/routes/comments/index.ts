@@ -3,7 +3,9 @@
 import * as awsx from '@pulumi/awsx';
 import { v4 as uuidv4 } from 'uuid';
 import { DynamoDB } from 'aws-sdk';
-import { marshall, parseBody, buildApiResponse, add500Handler, getUserId } from '$src/apiGatewayUtilities';
+import {
+  marshall, parseBody, buildApiResponse, add500Handler, getUserId,
+} from '$src/apiGatewayUtilities';
 import { query, hasProperty } from '$src/dynamodb/utils';
 import { createDynamo } from '$src/initAWS';
 import AnalysisService from '$src/services/AnalysisService';

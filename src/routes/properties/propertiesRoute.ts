@@ -102,7 +102,7 @@ export function propertyInsert() {
 
     const property: Property = {
       id: newId,
-      authorId: authorId,
+      authorId,
       created_date: date,
       description: description.toString(),
       name: name.toString(),
@@ -155,7 +155,7 @@ export function propertyUpdate() {
 
     if (!search.isConfirmed) {
       return buildApiResponse(403, {
-        message: 'Property not confirmed'
+        message: 'Property not confirmed',
       });
     }
 
@@ -212,7 +212,7 @@ export function propertyGetById() {
 
     if (!property.isConfirmed && property.authorId !== userId) {
       return buildApiResponse(403, {
-        message: 'Property not confirmed'
+        message: 'Property not confirmed',
       });
     }
 
@@ -396,7 +396,7 @@ export function propertyRate() {
 
     if (!search.isConfirmed && search.authorId !== customerId) {
       return buildApiResponse(403, {
-        message: 'Property not confirmed'
+        message: 'Property not confirmed',
       });
     }
 
@@ -438,7 +438,7 @@ export function propertyConfirm() {
 
     if (search.isConfirmed) {
       return buildApiResponse(403, {
-        message: 'Property already confirmed'
+        message: 'Property already confirmed',
       });
     }
 

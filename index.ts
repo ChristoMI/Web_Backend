@@ -267,7 +267,7 @@ let routes: Route[] = [{
   method: 'PUT',
   requiredParameters: [{
     in: 'path',
-    name: 'id'
+    name: 'id',
   }],
   authorizers: cognitoAuthorizerCustomers,
   eventHandler: new aws.lambda.CallbackFunction('propertyRate', {
@@ -425,7 +425,7 @@ let routes: Route[] = [{
       mode: 'Active',
     },
     environment,
-    memorySize: defaultMemorySize
+    memorySize: defaultMemorySize,
   }),
 },
 {
@@ -433,7 +433,7 @@ let routes: Route[] = [{
   method: 'DELETE',
   requiredParameters: [{
     in: 'path',
-    name: 'id'
+    name: 'id',
   }],
   authorizers: cognitoAuthorizerCustomers,
   eventHandler: new aws.lambda.CallbackFunction('deleteReservation', {
@@ -443,7 +443,7 @@ let routes: Route[] = [{
       mode: 'Active',
     },
     environment,
-    memorySize: defaultMemorySize
+    memorySize: defaultMemorySize,
   }),
 },
 {
@@ -457,7 +457,7 @@ let routes: Route[] = [{
       mode: 'Active',
     },
     environment,
-    memorySize: defaultMemorySize
+    memorySize: defaultMemorySize,
   }),
 },
 {
@@ -481,9 +481,9 @@ let routes: Route[] = [{
       mode: 'Active',
     },
     environment,
-    memorySize: defaultMemorySize
+    memorySize: defaultMemorySize,
   }),
-}
+},
 ];
 
 function addCors(corsRoutes: Route[]) {

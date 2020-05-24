@@ -157,5 +157,4 @@ describe('reservation', () => {
 
     expect(result.statusCode).to.be.equal(200);
   });
-
 });
