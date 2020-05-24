@@ -75,11 +75,8 @@ function countLockedRooms(beginDate: Date, endDate: Date, items: Reservation[]) 
 
   for (const date of dates) {
     const lockedRoomsCount = items.reduce((acc, item) => {
-      const beginItemDate = new Date(String(item.beginDate));
-      const endItemDate = new Date(String(item.endDate));
-
-      if (beginItemDate <= date && date <= endItemDate) {
-        return acc + Number(item.bookedRoomsNumber);
+      if (item.beginDate <= date && date <= item.endDate) {
+        return acc + item.bookedRoomsNumber;
       }
 
       return acc;
