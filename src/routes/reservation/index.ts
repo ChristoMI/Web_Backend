@@ -8,6 +8,7 @@ import {
 } from '$src/apiGatewayUtilities';
 import { query } from '$src/dynamodb/utils';
 import { createDynamo } from '$src/initAWS';
+import { PropertiesDynamoModel } from '../properties/propertiesModel';
 
 function toResponse(entry: DynamoDB.AttributeMap) {
   return {
@@ -61,35 +62,61 @@ function splitRange(beginDate: Date, endDate: Date) {
   return dates;
 }
 
-function createGetLockedRoomsCountHandler(beginDate: Date, endDate: Date) {
-  return (items: DynamoDB.Types.ItemList) => {
-    const dates = splitRange(beginDate, endDate);
+interface Reservation {
+  beginDate: Date,
+  endDate: Date,
+  bookedRoomsNumber: number
+}
 
-    let totalLockedRoomsCount = 0;
+function countLockedRooms(beginDate: Date, endDate: Date, items: Reservation[]) {
+  const dates = splitRange(beginDate, endDate);
 
-    for (const date of dates) {
-      const lockedRoomsCount = items.reduce((acc, item) => {
-        const beginItemDate = new Date(String(item.beginDate.S));
-        const endItemDate = new Date(String(item.endDate.S));
+  let totalLockedRoomsCount = 0;
 
-        if (beginItemDate <= date && date <= endItemDate) {
-          return acc + Number(item.bookedRoomsNumber.N);
-        }
+  for (const date of dates) {
+    const lockedRoomsCount = items.reduce((acc, item) => {
+      const beginItemDate = new Date(String(item.beginDate));
+      const endItemDate = new Date(String(item.endDate));
 
-        return acc;
-      }, 0);
-
-      if (lockedRoomsCount > totalLockedRoomsCount) {
-        totalLockedRoomsCount = lockedRoomsCount;
+      if (beginItemDate <= date && date <= endItemDate) {
+        return acc + Number(item.bookedRoomsNumber);
       }
-    }
 
-    return totalLockedRoomsCount;
+      return acc;
+    }, 0);
+
+    if (lockedRoomsCount > totalLockedRoomsCount) {
+      totalLockedRoomsCount = lockedRoomsCount;
+    }
+  }
+
+  return totalLockedRoomsCount;
+}
+
+async function calculateLockedRoomsFromDynamo(propertyId: string, beginDate: Date, endDate: Date, dynamo: DynamoDB) {
+  const params = {
+    TableName: 'reservation',
+    IndexName: 'reservation-by-property-id',
+    KeyConditionExpression: 'propertyId = :propertyId',
+    ExpressionAttributeValues: {
+      ':propertyId': { S: propertyId },
+    },
+    Limit: 1000,
   };
+
+  const queryResult = await query(dynamo, params);
+  const reservations = queryResult.map(r => ({
+    beginDate: new Date(String(r.beginDate.S)),
+    endDate: new Date(String(r.endDate.S)),
+    bookedRoomsNumber: Number(r.bookedRoomsNumber.N),
+  }));
+  const lockedRoomsCount = countLockedRooms(beginDate, endDate, reservations);
+  return lockedRoomsCount;
 }
 
 export function getAvailableCountReservations() {
   const dynamo = createDynamo();
+  const model = new PropertiesDynamoModel(dynamo);
 
   const handler = async (event: awsx.apigateway.Request) => {
     const propertyId = event.pathParameters!.id;
@@ -108,34 +135,17 @@ export function getAvailableCountReservations() {
       });
     }
 
-    const property = await dynamo.getItem({
-      TableName: 'properties',
-      Key: {
-        id: { S: propertyId },
-      },
-    }).promise();
+    const property = await model.findById(propertyId);
 
-    if (!property.Item) {
+    if (!property) {
       return buildApiResponse(404, {
         message: 'Property not found',
       });
     }
 
-    const totalRoomsNumber = Number(property.Item!.totalRoomsNumber.N) || 1;
+    const lockedRoomsCount = await calculateLockedRoomsFromDynamo(property.id, beginDate, endDate, dynamo);
+    const availableRoomsCount = property.totalRoomsNumber - lockedRoomsCount;
 
-    const params = {
-      TableName: 'reservation',
-      IndexName: 'reservation-by-property-id',
-      KeyConditionExpression: 'propertyId = :propertyId',
-      ExpressionAttributeValues: {
-        ':propertyId': { S: propertyId },
-      },
-      Limit: 1000,
-    };
-
-    const availableRoomsCount = await query(dynamo, params)
-      .then(createGetLockedRoomsCountHandler(beginDate, endDate))
-      .then((lockedRoomsCount) => totalRoomsNumber - lockedRoomsCount);
 
     return buildApiResponse(200, { availableRoomsCount });
   };
@@ -145,6 +155,7 @@ export function getAvailableCountReservations() {
 
 export function createReservation() {
   const dynamo = createDynamo();
+  const model = new PropertiesDynamoModel(dynamo);
 
   const handler = async (event: awsx.apigateway.Request) => {
     const customerId = getUserId(event);
@@ -156,34 +167,16 @@ export function createReservation() {
     const beginDate = new Date(body.beginDate);
     const endDate = new Date(body.endDate);
 
-    const property = await dynamo.getItem({
-      TableName: 'properties',
-      Key: {
-        id: { S: propertyId },
-      },
-    }).promise();
+    const property = await model.findById(propertyId);
 
-    if (!property.Item) {
+    if (!property) {
       return buildApiResponse(404, {
         message: 'Property not found',
       });
     }
 
-    const totalRoomsNumber = Number(property.Item!.totalRoomsNumber.N) || 1;
-
-    const params = {
-      TableName: 'reservation',
-      IndexName: 'reservation-by-property-id',
-      KeyConditionExpression: 'propertyId = :propertyId',
-      ExpressionAttributeValues: {
-        ':propertyId': { S: propertyId },
-      },
-      Limit: 1000,
-    };
-
-    const availableRoomsCount = await query(dynamo, params)
-      .then(createGetLockedRoomsCountHandler(beginDate, endDate))
-      .then((lockedRoomsCount) => totalRoomsNumber - lockedRoomsCount);
+    const lockedRoomsCount = await calculateLockedRoomsFromDynamo(property.id, beginDate, endDate, dynamo);
+    const availableRoomsCount = property.totalRoomsNumber - lockedRoomsCount;
 
     if (availableRoomsCount < bookedRoomsNumber) {
       return buildApiResponse(400, {
