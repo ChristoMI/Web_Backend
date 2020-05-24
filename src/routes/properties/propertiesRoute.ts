@@ -82,6 +82,7 @@ export function propertyInsert() {
 
   const handler = async (event: awsx.apigateway.Request) => {
     const newId = uuid();
+    const authorId = getUserId(event);
     const {
       description, name, address, city, country, landmarks, opportunities, price,
       cover_image_base64, cover_image_file_name, totalRoomsNumber,
@@ -101,6 +102,7 @@ export function propertyInsert() {
 
     const property: Property = {
       id: newId,
+      authorId: authorId,
       created_date: date,
       description: description.toString(),
       name: name.toString(),
@@ -165,6 +167,7 @@ export function propertyUpdate() {
     const property: Property = {
       id,
       name: name || search.name,
+      authorId: search.authorId,
       totalRoomsNumber: search.totalRoomsNumber,
       description: description || search.description,
       created_date: search.created_date,
@@ -199,6 +202,7 @@ export function propertyGetById() {
 
   const handler = async (event: awsx.apigateway.Request) => {
     const id = event.pathParameters ? event.pathParameters.id : '';
+    const userId = getUserId(event);
 
     const property = await dbModel.findById(id);
 
@@ -206,7 +210,7 @@ export function propertyGetById() {
       return buildNotFound();
     }
 
-    if (!property.isConfirmed) {
+    if (!property.isConfirmed && property.authorId !== userId) {
       return buildApiResponse(403, {
         message: 'Property not confirmed'
       });
@@ -390,7 +394,7 @@ export function propertyRate() {
       return buildNotFound();
     }
 
-    if (!search.isConfirmed) {
+    if (!search.isConfirmed && search.authorId !== customerId) {
       return buildApiResponse(403, {
         message: 'Property not confirmed'
       });

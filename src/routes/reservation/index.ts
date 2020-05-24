@@ -6,6 +6,7 @@ import { DynamoDB } from 'aws-sdk';
 import { marshall, parseBody, buildApiResponse, add500Handler, getUserId } from '$src/apiGatewayUtilities';
 import { query } from '$src/dynamodb/utils';
 import { createDynamo } from '$src/initAWS';
+import { PropertiesDynamoModel, Property, PropertyRating } from '../properties/propertiesModel';
 
 function toResponse(entry: DynamoDB.AttributeMap) {
   return {
@@ -94,8 +95,14 @@ export function getAvailableCountReservations() {
     const beginDate = new Date(event.queryStringParameters!.beginDate);
     const endDate = new Date(event.queryStringParameters!.endDate);
 
+    if (beginDate > endDate) {
+      return buildApiResponse(400, {
+        message: 'Invalid data input',
+      });
+    }
+
     if (beginDate < new Date()) {
-      return buildApiResponse(500, {
+      return buildApiResponse(400, {
         message: 'Reservation date unavailable',
       });
     }
@@ -178,8 +185,8 @@ export function createReservation() {
       .then((lockedRoomsCount) => totalRoomsNumber - lockedRoomsCount);
 
     if (availableRoomsCount < bookedRoomsNumber) {
-      return buildApiResponse(500, {
-        message: `available rooms count: ${availableRoomsCount}`
+      return buildApiResponse(400, {
+        message: `Not enough rooms, available rooms count: ${availableRoomsCount}`
       });
     }
 
@@ -233,7 +240,7 @@ export function deleteReservation() {
 
     if (new Date(String(reservation.Item.beginDate.S)) <= new Date()) {
       return buildApiResponse(500, {
-        message: 'Reservation date has ended',
+        message: 'Reservation duration has started',
       });
     }
 

@@ -50,6 +50,7 @@ describe('reservation', () => {
 
   it('should check available count reservations', async () => {
     const propertyResult = await propertyRoutes.propertyInsert()(stubs.createRequest({
+      sub: customerId,
       body: {
         name: 'test-name',
         description: 'test-description',
@@ -92,6 +93,7 @@ describe('reservation', () => {
 
   it('should create reservation', async () => {
     const propertyResult = await propertyRoutes.propertyInsert()(stubs.createRequest({
+      sub: customerId,
       body: {
         name: 'test-name',
         description: 'test-description',
@@ -119,6 +121,7 @@ describe('reservation', () => {
 
   it('should delete reservation', async () => {
     const propertyResult = await propertyRoutes.propertyInsert()(stubs.createRequest({
+      sub: customerId,
       body: {
         name: 'test-name',
         description: 'test-description',
