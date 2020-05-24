@@ -1,11 +1,20 @@
+import 'module-alias/register'; // for alias
+
 import { expect } from 'chai';
 import '../configTestEnvironment';
 import { createRequestFromBlueprint } from '../testApiGatewayRequest';
 import {
-  propertyInsert, propertyUpdate, propertyGetById, propertiesGet, propertyAddImage, propertyRemoveImage, propertyReorderImages,
+  propertyInsert, propertyUpdate, propertyGetById, propertiesGet, propertyConfirm,
+  propertyAddImage, propertyRemoveImage, propertyReorderImages, propertyRate,
 } from '../../src/routes/properties/propertiesRoute';
 import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '$src/routes/settings';
 import { assertOkResult } from '$tests/assertHelpers';
+
+import stubs = require('$tests/profileHandler/stubs');
+
+export function confirmProperty(propertyId: String) {
+  return propertyConfirm()(createRequestFromBlueprint({}, { id: propertyId }));
+}
 
 describe('propertiesRoute route', () => {
   before(() => {
@@ -80,6 +89,9 @@ describe('propertiesRoute route', () => {
     assertOkResult(result);
 
     const id = JSON.parse(result.body).id;
+
+    await confirmProperty(id);
+
     const getResult = await propertyGetById()(createRequestFromBlueprint({}, { id }));
     assertOkResult(getResult);
 
@@ -91,6 +103,9 @@ describe('propertiesRoute route', () => {
     assertOkResult(result);
 
     const id = JSON.parse(result.body).id;
+
+    await confirmProperty(id);
+
     const getResult = await propertyGetById()(createRequestFromBlueprint({}, { id }));
     assertOkResult(getResult);
     expect(JSON.parse(getResult.body).id).to.be.equal(id);
@@ -120,6 +135,9 @@ describe('propertiesRoute route', () => {
     const created = JSON.parse(postResult.body);
 
     const id = created.id;
+
+    await confirmProperty(id);
+
     const putResult = await propertyUpdate()(createRequestFromBlueprint({
       name: 'Another LOL',
       address: 'SOme street1',
@@ -202,6 +220,115 @@ describe('propertiesRoute route', () => {
       const newProperty = JSON.parse(reorderResponse.body);
       expect(newProperty.images).to.have.length(2);
       expect(newProperty.images.map((i: any) => i.id)).to.be.eql([2, 1]);
+    });
+  });
+
+  describe('rate property', async () => {
+    it('should return rating', async () => {
+      const resultInsert = await propertyInsert()(createRequestFromBlueprint({
+        name: 'LOL',
+        description: 'KEK',
+        address: 'SOme street',
+        opportunities: ['opp1', 'opp2'],
+        landmarks: [{
+          name: 'l1',
+          distance: 12,
+        }],
+        price: 200,
+      }));
+
+      assertOkResult(resultInsert);
+
+      const property = JSON.parse(resultInsert.body);
+
+      await confirmProperty(property.id);
+
+      const result = await propertyRate()(createRequestFromBlueprint({ rating: 5 }, { id: property.id }, stubs.customer.id));
+
+      assertOkResult(result);
+
+      const body = JSON.parse(result.body);
+
+      expect(body.rating).to.be.equal(5);
+    });
+
+    it('should return average rating', async () => {
+      const resultInsert = await propertyInsert()(createRequestFromBlueprint({
+        name: 'LOL',
+        description: 'KEK',
+        address: 'SOme street',
+        opportunities: ['opp1', 'opp2'],
+        landmarks: [{
+          name: 'l1',
+          distance: 12,
+        }],
+        price: 200,
+      }));
+
+      assertOkResult(resultInsert);
+
+      const property = JSON.parse(resultInsert.body);
+
+      await confirmProperty(property.id);
+
+      const result1 = await propertyRate()(createRequestFromBlueprint({ rating: 5 }, { id: property.id }, stubs.customer.id));
+      assertOkResult(result1);
+      const result2 = await propertyRate()(createRequestFromBlueprint({ rating: 2 }, { id: property.id }, stubs.customer.id));
+      assertOkResult(result2);
+      const result3 = await propertyRate()(createRequestFromBlueprint({ rating: 9 }, { id: property.id }, stubs.customer.id));
+      assertOkResult(result3);
+
+      const body = JSON.parse(result3.body);
+
+      expect(body.rating).to.be.equal(5);
+    });
+  });
+
+  describe('confirm property', async () => {
+    it('should return unconfirmed property', async () => {
+      const result = await propertyInsert()(createRequestFromBlueprint({
+        name: 'LOL',
+        description: 'KEK',
+        address: 'SOme street',
+        opportunities: ['opp1', 'opp2'],
+        landmarks: [{
+          name: 'l1',
+          distance: 12,
+        }],
+        price: 200,
+      }));
+
+      assertOkResult(result);
+
+      const body = JSON.parse(result.body);
+
+      expect(body.isConfirmed).to.be.equal(false);
+    });
+
+    it('should return confirmed property', async () => {
+      const resultInsert = await propertyInsert()(createRequestFromBlueprint({
+        name: 'LOL',
+        description: 'KEK',
+        address: 'SOme street',
+        opportunities: ['opp1', 'opp2'],
+        landmarks: [{
+          name: 'l1',
+          distance: 12,
+        }],
+        price: 200,
+      }));
+
+      assertOkResult(resultInsert);
+
+      const property = JSON.parse(resultInsert.body);
+
+      const result = await propertyConfirm()(createRequestFromBlueprint({}, { id: property.id }));
+
+      assertOkResult(result);
+
+      const body = JSON.parse(result.body);
+
+      expect(body.isConfirmed).to.be.equal(true);
     });
   });
 });

@@ -6,6 +6,7 @@ import { DynamoDB } from 'aws-sdk';
 import {
   marshall, parseBody, buildApiResponse, add500Handler, getUserId,
 } from '$src/apiGatewayUtilities';
+import { query, hasProperty } from '$src/dynamodb/utils';
 import { createDynamo } from '$src/initAWS';
 import AnalysisService from '$src/services/AnalysisService';
 
@@ -35,40 +36,8 @@ function toArrayResponse(items: DynamoDB.Types.ItemList, authors: Map<string, an
   return items.map((item) => toResponse(item, authors));
 }
 
-async function query(
-  dynamo: DynamoDB,
-  params: DynamoDB.Types.QueryInput,
-  items: Array<Object> = [],
-): Promise<Array<Object>> {
-  const data = await dynamo.query(params).promise();
-
-  const newItems = items.concat(data.Items || []);
-
-  if (data.LastEvaluatedKey) {
-    const newParams = {
-      ...params,
-      ExclusiveStartKey: data.LastEvaluatedKey,
-    };
-
-    return query(dynamo, newParams, newItems);
-  }
-
-  return Promise.resolve(newItems);
-}
-
 function sortByDate(field: any) {
   return (list: Array<any>) => list.sort((a, b) => (+new Date(b[field]) - +new Date(a[field])));
-}
-
-async function hasProperty(dynamo: DynamoDB, propertyId: string): Promise<boolean> {
-  const data = await dynamo.getItem({
-    TableName: 'properties',
-    Key: {
-      id: { S: propertyId },
-    },
-  }).promise();
-
-  return !!data.Item;
 }
 
 async function getCustomerProfiles(dynamo: DynamoDB, ids: Set<string>): Promise<Map<string, any>> {

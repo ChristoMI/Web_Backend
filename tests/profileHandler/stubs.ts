@@ -1,5 +1,7 @@
+import uuid = require('uuid');
+
 export const customer = {
-  id: '3d527de1-09f8-4c1f-b0d0-37de565e28a4',
+  id: uuid(),
   username: 'username',
   email: 'test@gmail.com',
   firstName: 'first-name',
@@ -32,7 +34,7 @@ export const customerPostConfirmationEvent = {
 };
 
 export const host = {
-  id: '3d527de1-09f8-4c1f-b0d0-37de565e28a4',
+  id: uuid(),
   username: 'username',
   email: 'test@gmail.com',
   firstName: 'first-name',
@@ -67,6 +69,7 @@ export const hostPostConfirmationEvent = {
 export function createRequest({
   body = {},
   pathParameters = {},
+  queryStringParameters = {},
   sub = '',
 }) {
   return {
@@ -77,7 +80,7 @@ export function createRequest({
     isBase64Encoded: false,
     path: '',
     pathParameters,
-    queryStringParameters: {},
+    queryStringParameters,
     multiValueQueryStringParameters: {},
     stageVariables: {},
     requestContext: {

@@ -4,6 +4,8 @@ import { DynamoDB } from 'aws-sdk';
 export interface Property {
     id: string;
     name: string;
+    authorId?: string;
+    totalRoomsNumber: number;
     city?: string;
     country?: string;
     address?: string;
@@ -14,6 +16,13 @@ export interface Property {
     created_date: Date;
     cover_image_key?: string;
     property_images: PropertyImage[];
+    ratings: PropertyRating[];
+    isConfirmed: boolean;
+}
+
+export interface PropertyRating {
+  customerId: string;
+  rating: number;
 }
 
 export interface PropertyLandmark {
@@ -40,6 +49,8 @@ export class PropertiesDynamoModel {
       return {
         id: attributes.id.S!,
         name: attributes.name.S!,
+        authorId: attributes.authorId ? attributes.authorId.S : undefined,
+        totalRoomsNumber: attributes.totalRoomsNumber ? +attributes.totalRoomsNumber.N! : 1,
         price: attributes.price ? +attributes.price.N! : 0,
         opportunities: attributes.opportunities ? attributes.opportunities.SS! : [],
         landmarks: attributes.landmarks ? attributes.landmarks.L!.map(l => ({
@@ -58,6 +69,11 @@ export class PropertiesDynamoModel {
           image_key: i.M!.image_key.S!,
         }))
           : [],
+        ratings: attributes.ratings ? attributes.ratings.L!.map((r) => ({
+          customerId: r.M!.customerId.S!,
+          rating: +r.M!.rating.N!,
+        })) : [],
+        isConfirmed: attributes.isConfirmed ? attributes.isConfirmed.BOOL! : false,
       };
     }
 
@@ -65,6 +81,7 @@ export class PropertiesDynamoModel {
       const item: DynamoDB.AttributeMap = {
         id: { S: property.id },
         name: { S: property.name },
+        authorId: { S: property.authorId },
         description: { S: property.description },
         created_date: { S: property.created_date.toISOString() },
         property_images: {
@@ -79,6 +96,7 @@ export class PropertiesDynamoModel {
         landmarks: {
           L: property.landmarks.map(l => ({ M: { name: { S: l.name }, distance: { N: l.distance.toString() } } })),
         },
+        isConfirmed: { BOOL: property.isConfirmed || false },
       };
 
       if (property.address) {
@@ -99,6 +117,21 @@ export class PropertiesDynamoModel {
 
       if (property.cover_image_key) {
         item.cover_image_key = { S: property.cover_image_key };
+      }
+
+      if (property.totalRoomsNumber) {
+        item.totalRoomsNumber = { N: String(property.totalRoomsNumber) };
+      }
+
+      if (property.ratings) {
+        item.ratings = {
+          L: property.ratings.map((r) => ({
+            M: {
+              customerId: { S: r.customerId },
+              rating: { N: String(r.rating) },
+            },
+          })),
+        };
       }
 
       await this.dynamodb.putItem({
