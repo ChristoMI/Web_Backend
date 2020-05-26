@@ -42,6 +42,7 @@ export function createProfile() {
           avatarUrl: user.picture,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
+          isAdmin: false,
         }),
       }).promise();
 
