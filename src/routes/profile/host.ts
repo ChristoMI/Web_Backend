@@ -18,6 +18,7 @@ function toResponse(entry: DynamoDB.AttributeMap, staticDomain: string) {
       || (entry.avatarUrl && entry.avatarUrl.S),
     createdAt: entry.createdAt.S,
     updatedAt: entry.updatedAt.S,
+    isAdmin: entry.isAdmin ? entry.isAdmin.BOOL : false,
   };
 }
 
@@ -141,6 +142,75 @@ export function updateProfile() {
 
       throw err;
     }
+  };
+
+  return add500Handler(handler);
+}
+
+async function isUserAdmin(dynamo: DynamoDB, userId: string) {
+  const current = await dynamo.getItem({
+    TableName: tableName,
+    Key: {
+      id: { S: userId },
+    },
+  }).promise();
+
+  return current.Item && current.Item.isAdmin && current.Item.isAdmin.BOOL;
+}
+
+export function markAsAdmin() {
+  const dynamo = createDynamo();
+
+  const handler = async (event: apigateway.Request) => {
+    const currentHostId = getUserId(event);
+
+    const isAdmin = await isUserAdmin(dynamo, currentHostId);
+    if (!isAdmin) {
+      return buildApiResponse(403, { message: 'Current user is not an Admin' });
+    }
+
+    const targetId = event.pathParameters!.hostId;
+    const result = await dynamo.updateItem({
+      TableName: tableName,
+      Key: {
+        id: { S: targetId },
+      },
+      ConditionExpression: 'id = :id',
+      UpdateExpression: 'set isAdmin = :isAdmin',
+      ExpressionAttributeValues: { ':isAdmin': { BOOL: true }, ':id': { S: targetId } },
+    }).promise();
+
+    if (!result) {
+      return buildApiResponse(404, { message: 'Host not found' });
+    }
+
+    return buildApiResponse(204, { message: 'Host updated successfully' });
+  };
+
+  return add500Handler(handler);
+}
+
+export function getAllProfiles() {
+  const dynamo = createDynamo();
+  const staticDomain = process.env[STATIC_DOMAIN_ENV_KEY]!;
+
+  const handler = async (event: apigateway.Request) => {
+    const currentHostId = getUserId(event);
+
+    const isAdmin = await isUserAdmin(dynamo, currentHostId);
+    if (!isAdmin) {
+      return buildApiResponse(403, { message: 'Current user is not an Admin' });
+    }
+
+    const hosts = await dynamo.scan({
+      TableName: tableName,
+    }).promise();
+
+    if (!hosts.Items) {
+      return buildApiResponse(404, { message: 'Hosts not found' });
+    }
+
+    return buildApiResponse(200, hosts.Items.map(h => toResponse(h, staticDomain)));
   };
 
   return add500Handler(handler);

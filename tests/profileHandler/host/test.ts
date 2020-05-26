@@ -3,12 +3,28 @@ import 'module-alias/register'; // for alias
 import { expect } from 'chai';
 
 import '$tests/configTestEnvironment';
-import { assertOkResult } from '$tests/assertHelpers';
+import { assertOkResult, assertResult } from '$tests/assertHelpers';
 
 import routes = require('$src/routes/profile/host');
 import stubs = require('../stubs');
+import uuid = require('uuid');
 
 describe('profile:host', () => {
+  const newHostId = uuid();
+  beforeEach(async () => {
+    const newHost = {
+      ...stubs.hostPostConfirmationEvent,
+      request: {
+        ...stubs.hostPostConfirmationEvent.request,
+        userAttributes: {
+          ...stubs.hostPostConfirmationEvent.request.userAttributes,
+          sub: newHostId,
+        },
+      },
+    };
+    await routes.createProfile()(newHost, {}, () => {});
+  });
+
   it('0 - should return host profile', async () => {
     const request = stubs.createRequest({
       sub: stubs.host.id,
@@ -63,6 +79,54 @@ describe('profile:host', () => {
     expect(profile.avatarUrl).to.not.be.empty;
     expect(profile.avatarUrl).to.contain('image.png');
     expect(profile.avatarUrl).to.satisfy((s: string) => s.startsWith('https://'), result.body);
+  });
+
+  it('should mark host as admin', async () => {
+    const markRequest = stubs.createRequest({
+      sub: stubs.host.id,
+      pathParameters: { hostId: newHostId },
+    });
+    const markResult = await routes.markAsAdmin()(markRequest);
+    assertResult(markResult, 204);
+
+    const request = stubs.createRequest({
+      sub: newHostId,
+    });
+    const result = await routes.getProfile()(request);
+    const profile = JSON.parse(result.body);
+
+    expect(profile.id).to.be.equal(newHostId);
+    expect(profile.isAdmin).to.be.equal(true);
+  });
+
+  it('should not mark host as admin if actor is not admin', async () => {
+    const markRequest = stubs.createRequest({
+      sub: newHostId,
+      pathParameters: { hostId: stubs.host.id },
+    });
+    const markResult = await routes.markAsAdmin()(markRequest);
+    assertResult(markResult, 403);
+  });
+
+  it('should list hosts if actor admin', async () => {
+    const request = stubs.createRequest({
+      sub: stubs.host.id,
+    });
+    const result = await routes.getAllProfiles()(request);
+    assertResult(result, 200);
+
+    const items: any[] = JSON.parse(result.body);
+    expect(items.length).to.be.greaterThan(2);
+    expect(items.find((i => i.id === stubs.host.id))).to.not.be.equal(undefined);
+    expect(items.find((i => i.id === newHostId))).to.not.be.equal(undefined);
+  });
+
+  it('should not list hosts if actor not admin', async () => {
+    const request = stubs.createRequest({
+      sub: newHostId,
+    });
+    const result = await routes.getAllProfiles()(request);
+    assertResult(result, 403);
   });
 
   it('should return 404 error on update host profile', async () => {

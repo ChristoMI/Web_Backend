@@ -234,6 +234,38 @@ let routes: Route[] = [{
   }),
 },
 {
+  path: '/hosts',
+  method: 'GET',
+  authorizers: cognitoAuthorizerHosts,
+  eventHandler: new aws.lambda.CallbackFunction('getAllProfiles', {
+    callbackFactory: profileRoutes.host.getAllProfiles,
+    reservedConcurrentExecutions: defaultConcurrentExecutions,
+    tracingConfig: {
+      mode: 'Active',
+    },
+    environment,
+    memorySize: defaultMemorySize,
+  }),
+},
+{
+  path: '/hosts/{hostId}/markAdmin',
+  method: 'PUT',
+  authorizers: cognitoAuthorizerHosts,
+  requiredParameters: [{
+    in: 'path',
+    name: 'hostId',
+  }],
+  eventHandler: new aws.lambda.CallbackFunction('markHostAsAdmin', {
+    callbackFactory: profileRoutes.host.markAsAdmin,
+    reservedConcurrentExecutions: defaultConcurrentExecutions,
+    tracingConfig: {
+      mode: 'Active',
+    },
+    environment,
+    memorySize: defaultMemorySize,
+  }),
+},
+{
   path: '/properties',
   method: 'GET',
   eventHandler: new aws.lambda.CallbackFunction('propertiesGet', {
