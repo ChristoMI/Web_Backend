@@ -142,7 +142,7 @@ describe('profile:host', () => {
     assertResult(result, 200);
 
     const items: any[] = JSON.parse(result.body);
-    expect(items.length).to.be.greaterThan(2);
+    expect(items.length).to.be.greaterThan(1);
     expect(items.find((i => i.id === stubs.host.id))).to.not.be.equal(undefined);
     expect(items.find((i => i.id === newHostId))).to.not.be.equal(undefined);
   });
