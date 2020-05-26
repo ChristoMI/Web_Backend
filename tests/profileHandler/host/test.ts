@@ -85,6 +85,9 @@ describe('profile:host', () => {
     const markRequest = stubs.createRequest({
       sub: stubs.host.id,
       pathParameters: { hostId: newHostId },
+      body: {
+        isAdmin: true,
+      },
     });
     const markResult = await routes.markAsAdmin()(markRequest);
     assertResult(markResult, 204);
@@ -97,6 +100,29 @@ describe('profile:host', () => {
 
     expect(profile.id).to.be.equal(newHostId);
     expect(profile.isAdmin).to.be.equal(true);
+  });
+
+  it('should unmark host as admin', async () => {
+    const markRequest = stubs.createRequest({
+      sub: stubs.host.id,
+      pathParameters: { hostId: newHostId },
+      body: {
+        isAdmin: true,
+      },
+    });
+    await routes.markAsAdmin()(markRequest);
+    markRequest.body = JSON.stringify({ isAdmin: false });
+    const markResult = await routes.markAsAdmin()(markRequest);
+    assertResult(markResult, 204);
+
+    const request = stubs.createRequest({
+      sub: newHostId,
+    });
+    const result = await routes.getProfile()(request);
+    const profile = JSON.parse(result.body);
+
+    expect(profile.id).to.be.equal(newHostId);
+    expect(profile.isAdmin).to.be.equal(false);
   });
 
   it('should not mark host as admin if actor is not admin', async () => {

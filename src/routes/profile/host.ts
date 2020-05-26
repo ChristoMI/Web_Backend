@@ -162,6 +162,7 @@ export function markAsAdmin() {
   const dynamo = createDynamo();
 
   const handler = async (event: apigateway.Request) => {
+    const body = parseBody(event);
     const currentHostId = getUserId(event);
 
     const isAdmin = await isUserAdmin(dynamo, currentHostId);
@@ -170,6 +171,11 @@ export function markAsAdmin() {
     }
 
     const targetId = event.pathParameters!.hostId;
+    if (currentHostId === targetId) {
+      return buildApiResponse(400, { message: 'Can not change status of oneself' });
+    }
+
+    const targetAdmin = !!body.isAdmin;
     const result = await dynamo.updateItem({
       TableName: tableName,
       Key: {
@@ -177,7 +183,7 @@ export function markAsAdmin() {
       },
       ConditionExpression: 'id = :id',
       UpdateExpression: 'set isAdmin = :isAdmin',
-      ExpressionAttributeValues: { ':isAdmin': { BOOL: true }, ':id': { S: targetId } },
+      ExpressionAttributeValues: { ':isAdmin': { BOOL: targetAdmin }, ':id': { S: targetId } },
     }).promise();
 
     if (!result) {
