@@ -48,13 +48,21 @@ interface Claim {
   client_id: string;
 }
 
-const cognitoPoolId = process.env.COGNITO_POOL_ID || '';
-const cognitoIssuer = `https://cognito-idp.${AWS.config.region!}.amazonaws.com/${cognitoPoolId}`;
+
+function cognitoIssuer() {
+  const cognitoPoolId = process.env.COGNITO_POOL_ID || '';
+
+  if (!cognitoPoolId) {
+    throw new Error('env var required for cognito pool');
+  }
+
+  return `https://cognito-idp.${AWS.config.region!}.amazonaws.com/${cognitoPoolId}`;
+}
 
 let cacheKeys: MapOfKidToPublicKey | undefined;
 const getPublicKeys = async (): Promise<MapOfKidToPublicKey> => {
   if (!cacheKeys) {
-    const url = `${cognitoIssuer}/.well-known/jwks.json`;
+    const url = `${cognitoIssuer()}/.well-known/jwks.json`;
     const publicKeys = await Axios.default.get<PublicKeys>(url);
     cacheKeys = publicKeys.data.keys.reduce((agg, current: any) => {
       const pem = jwkToPem(current);
@@ -68,10 +76,6 @@ const getPublicKeys = async (): Promise<MapOfKidToPublicKey> => {
 };
 
 const verifyToken = async (request: ClaimVerifyRequest): Promise<ClaimVerifyResult> => {
-  if (!cognitoPoolId) {
-    throw new Error('env var required for cognito pool');
-  }
-
   let result: ClaimVerifyResult;
   try {
     const token = request.token;
@@ -92,7 +96,7 @@ const verifyToken = async (request: ClaimVerifyRequest): Promise<ClaimVerifyResu
     if (currentSeconds > claim.exp || currentSeconds < claim.auth_time) {
       throw new Error('claim is expired or invalid');
     }
-    if (claim.iss !== cognitoIssuer) {
+    if (claim.iss !== cognitoIssuer()) {
       throw new Error('claim issuer is invalid');
     }
     if (claim.token_use !== 'access') {

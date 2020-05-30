@@ -274,7 +274,7 @@ let routes: Route[] = [{
     tracingConfig: {
       mode: 'Active',
     },
-    environment: { variables: { ...environment.variables, COGNITO_POOL_ID: hostsUserPool.arn } },
+    environment: { variables: { ...environment.variables, COGNITO_POOL_ID: hostsUserPool.id } },
     memorySize: defaultMemorySize,
   }),
 },
