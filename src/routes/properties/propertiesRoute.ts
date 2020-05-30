@@ -7,6 +7,8 @@ import {
 } from '$src/apiGatewayUtilities';
 import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '../settings';
 import { PropertiesDynamoModel, Property, PropertyRating } from './propertiesModel';
+import { getCurrentUser } from '../user';
+import { canSee, insuficientPermissionsResult } from '../propertyPermission';
 
 export interface PropertyImageApiResponse {
   id: number,
@@ -147,17 +149,14 @@ export function propertyUpdate() {
       cover_image_base64, cover_image_file_name,
     } = parseBody(event);
 
+    const user = await getCurrentUser(event, dynamo);
     const search = await dbModel.findById(id);
 
     if (!search) {
       return buildNotFound();
     }
 
-    if (!search.isConfirmed) {
-      return buildApiResponse(403, {
-        message: 'Property not confirmed',
-      });
-    }
+    if (!canSee(user, search)) return insuficientPermissionsResult();
 
     let imageKey = search.cover_image_key;
     if (cover_image_base64 && cover_image_file_name) {
@@ -202,7 +201,7 @@ export function propertyGetById() {
 
   const handler = async (event: awsx.apigateway.Request) => {
     const id = event.pathParameters ? event.pathParameters.id : '';
-    const userId = getUserId(event);
+    const user = await getCurrentUser(event, dynamo);
 
     const property = await dbModel.findById(id);
 
@@ -210,11 +209,7 @@ export function propertyGetById() {
       return buildNotFound();
     }
 
-    if (!property.isConfirmed && property.authorId !== userId) {
-      return buildApiResponse(403, {
-        message: 'Property not confirmed',
-      });
-    }
+    if (!canSee(user, property)) return insuficientPermissionsResult();
 
     return buildApiResponse(200, toResponse(property, (key) => imageUrlFormatter(key, staticDomain)));
   };
@@ -239,12 +234,15 @@ export function propertyAddImage() {
   const handler = async (event: awsx.apigateway.Request) => {
     const id = event.pathParameters ? event.pathParameters.id : '';
     const body = parseBody(event);
+    const user = await getCurrentUser(event, dynamo);
 
     const property = await dbModel.findById(id);
 
     if (!property) {
       return buildNotFound();
     }
+
+    if (!canSee(user, property)) return insuficientPermissionsResult();
 
     const newId = property.property_images.map((i) => i.id).reduce((p, n) => (p > n ? p : n), 0) + 1;
     const imageKey = await uploader.uploadImage(id, body.image_base64, body.image_file_name);
@@ -277,10 +275,13 @@ export function propertyRemoveImage() {
     const imageId = event.pathParameters ? +event.pathParameters.imageId : 0;
 
     const property = await dbModel.findById(id);
+    const user = await getCurrentUser(event, dynamo);
 
     if (!property) {
       return buildNotFound();
     }
+
+    if (!canSee(user, property)) return insuficientPermissionsResult();
 
     const toRemove = property.property_images.find(pi => pi.id === imageId);
 
@@ -311,10 +312,13 @@ export function propertyReorderImages() {
   const handler = async (event: awsx.apigateway.Request) => {
     const id = event.pathParameters ? event.pathParameters.id : '';
     const property = await dbModel.findById(id);
+    const user = await getCurrentUser(event, dynamo);
 
     if (!property) {
       return buildNotFound();
     }
+
+    if (!canSee(user, property)) return insuficientPermissionsResult();
 
     const body = parseBody(event);
     const imageIds: number[] = body.imageIdsInOrder || [];
@@ -356,12 +360,12 @@ export function propertiesGet() {
     throw new Error('Expected staticDomain config to be present');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handler = async (event: awsx.apigateway.Request) => {
     const properties = await dbModel.findAll();
+    const user = await getCurrentUser(event, dynamo);
 
     const collection = properties
-      .filter((p) => p.isConfirmed)
+      .filter((p) => canSee(user, p))
       .map((p) => toResponse(p, (key) => imageUrlFormatter(key, staticDomain)));
 
     return buildApiResponse(200, collection);
@@ -380,9 +384,8 @@ export function propertyRate() {
     throw new Error('Expected staticDomain config to be present');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handler = async (event: awsx.apigateway.Request) => {
-    const customerId = getUserId(event);
+    const user = await getCurrentUser(event, dynamo);
 
     const propertyId = event.pathParameters!.id;
 
@@ -394,16 +397,12 @@ export function propertyRate() {
       return buildNotFound();
     }
 
-    if (!search.isConfirmed && search.authorId !== customerId) {
-      return buildApiResponse(403, {
-        message: 'Property not confirmed',
-      });
-    }
+    if (!canSee(user, search)) return insuficientPermissionsResult();
 
     const property: Property = {
       ...search,
       ratings: search.ratings.concat({
-        customerId,
+        customerId: user.userId,
         rating: +body.rating,
       }),
     };
@@ -426,15 +425,17 @@ export function propertyConfirm() {
     throw new Error('Expected staticDomain config to be present');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handler = async (event: awsx.apigateway.Request) => {
     const propertyId = event.pathParameters!.id;
 
+    const user = await getCurrentUser(event, dynamo);
     const search = await dbModel.findById(propertyId);
 
     if (!search) {
       return buildNotFound();
     }
+
+    if (!canSee(user, search)) return insuficientPermissionsResult();
 
     if (search.isConfirmed) {
       return buildApiResponse(403, {

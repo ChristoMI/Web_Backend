@@ -20,14 +20,3 @@ export async function query(
 
   return Promise.resolve(newItems);
 }
-
-export async function hasProperty(dynamo: DynamoDB, propertyId: string): Promise<boolean> {
-  const data = await dynamo.getItem({
-    TableName: 'properties',
-    Key: {
-      id: { S: propertyId },
-    },
-  }).promise();
-
-  return !!data.Item;
-}

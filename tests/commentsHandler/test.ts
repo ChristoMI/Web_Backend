@@ -4,7 +4,7 @@ import 'module-alias/register';
 import { expect } from 'chai';
 import { createRequestFromBlueprint } from '../testApiGatewayRequest';
 import * as commentsRoutes from '$src/routes/comments';
-import { propertyInsert } from '$src/routes/properties/propertiesRoute';
+import { propertyInsert, propertyConfirm } from '$src/routes/properties/propertiesRoute';
 import AnalysisService from '$src/services/AnalysisService';
 import { getMoodType } from '$src/routes/comments/moodTypeConversion';
 
@@ -17,6 +17,10 @@ import sinon = require('sinon');
 
 import customerRoutes = require('$src/routes/profile/customer');
 import stubs = require('../profileHandler/stubs');
+
+function confirmProperty(propertyId: String) {
+  return propertyConfirm()(createRequestFromBlueprint({}, { id: propertyId }));
+}
 
 describe('comments', () => {
   before(async () => {
@@ -74,6 +78,7 @@ describe('comments', () => {
 
 
     const propertyId = JSON.parse(data.body).id;
+    await confirmProperty(propertyId);
 
     const text = 'Horrible hotel, never will stay here again';
 
@@ -115,6 +120,8 @@ describe('comments', () => {
     assertOkResult(data1);
 
     const propertyId = JSON.parse(data1.body).id;
+
+    await confirmProperty(propertyId);
 
     const commentResponse = await createComment(propertyId, 'Horrible hotel, never will stay here again');
     assertOkResult(commentResponse);

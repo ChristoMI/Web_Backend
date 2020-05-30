@@ -4,13 +4,16 @@ import * as awsx from '@pulumi/awsx';
 import { v4 as uuidv4 } from 'uuid';
 import { DynamoDB } from 'aws-sdk';
 import {
-  marshall, parseBody, buildApiResponse, add500Handler, getUserId,
+  marshall, parseBody, buildApiResponse, add500Handler,
 } from '$src/apiGatewayUtilities';
-import { query, hasProperty } from '$src/dynamodb/utils';
+import { query } from '$src/dynamodb/utils';
 import { createDynamo } from '$src/initAWS';
 import AnalysisService from '$src/services/AnalysisService';
 
 import { getMoodType } from './moodTypeConversion';
+import { PropertiesDynamoModel } from '../properties/propertiesModel';
+import { getNonAdminUser } from '../user';
+import { canSee, insuficientPermissionsResult } from '../propertyPermission';
 
 function toResponse(entry: DynamoDB.AttributeMap, authors: Map<string, any>) {
   const author = entry.authorId && entry.authorId.S && authors.has(entry.authorId.S)
@@ -64,9 +67,11 @@ async function getCustomerProfiles(dynamo: DynamoDB, ids: Set<string>): Promise<
 
 export function getCommentsByPropertyId() {
   const dynamo = createDynamo();
+  const propertyModel = new PropertiesDynamoModel(dynamo);
 
   const handler = async (event: awsx.apigateway.Request) => {
     const propertyId = event.pathParameters!.id;
+    const user = getNonAdminUser(event);
 
     const params = {
       TableName: 'comment',
@@ -77,13 +82,15 @@ export function getCommentsByPropertyId() {
       Limit: 1000,
     };
 
-    const exist = await hasProperty(dynamo, propertyId);
+    const property = await propertyModel.findById(propertyId);
 
-    if (!exist) {
+    if (!property) {
       return buildApiResponse(404, {
         message: 'Property not found',
       });
     }
+
+    if (!canSee(user, property)) return insuficientPermissionsResult();
 
     const comments = await query(dynamo, params)
       .then(sortByDate('createdDate'));
@@ -100,21 +107,24 @@ export function getCommentsByPropertyId() {
 
 export function createPropertyComment() {
   const dynamo = createDynamo();
+  const propertyModel = new PropertiesDynamoModel(dynamo);
 
   const analysisService = new AnalysisService(process.env.AnalysisServerUrl!);
 
   const handler = async (event: awsx.apigateway.Request) => {
-    const authorId = getUserId(event);
+    const user = getNonAdminUser(event);
     const propertyId = event.pathParameters!.id;
     const body = parseBody(event);
 
-    const exist = await hasProperty(dynamo, propertyId);
+    const property = await propertyModel.findById(propertyId);
 
-    if (!exist) {
+    if (!property) {
       return buildApiResponse(404, {
         message: 'Property not found',
       });
     }
+
+    if (!canSee(user, property)) return insuficientPermissionsResult();
 
     const mood = await analysisService.getCommentMood(body.text);
 
@@ -122,7 +132,7 @@ export function createPropertyComment() {
       id: uuidv4(),
       text: body.text,
       propertyId,
-      authorId,
+      authorId: user.userId,
       mood: {
         neg: mood.neg,
         neu: mood.neu,
@@ -136,7 +146,7 @@ export function createPropertyComment() {
       TableName: 'comment',
       Item: comment,
     }).promise();
-    const authors = await getCustomerProfiles(dynamo, new Set([authorId]));
+    const authors = await getCustomerProfiles(dynamo, new Set([user.userId]));
     return buildApiResponse(200, toResponse(comment, authors));
   };
 
