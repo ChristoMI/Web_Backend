@@ -49,9 +49,6 @@ interface Claim {
 }
 
 const cognitoPoolId = process.env.COGNITO_POOL_ID || '';
-if (!cognitoPoolId) {
-  throw new Error('env var required for cognito pool');
-}
 const cognitoIssuer = `https://cognito-idp.us-east-1.amazonaws.com/${cognitoPoolId}`;
 
 let cacheKeys: MapOfKidToPublicKey | undefined;
@@ -73,6 +70,10 @@ const getPublicKeys = async (): Promise<MapOfKidToPublicKey> => {
 const verifyPromised = promisify(jsonwebtoken.verify.bind(jsonwebtoken));
 
 const verifyToken = async (request: ClaimVerifyRequest): Promise<ClaimVerifyResult> => {
+  if (!cognitoPoolId) {
+    throw new Error('env var required for cognito pool');
+  }
+
   let result: ClaimVerifyResult;
   try {
     const token = request.token;
