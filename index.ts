@@ -153,7 +153,7 @@ const cognitoAuthorizerHosts = awsx.apigateway.getCognitoAuthorizer({
 
 const anonymousAuthorizer = awsx.apigateway.getRequestLambdaAuthorizer({
   authorizerName: 'AllowAnonymous',
-  handler: new aws.lambda.CallbackFunction('testRouteGet', {
+  handler: new aws.lambda.CallbackFunction('AllowANonymousAuthorizer', {
     callback: (evnt: awsx.apigateway.AuthorizerEvent) => {
       const authResponse: any = {};
 
@@ -178,6 +178,7 @@ const anonymousAuthorizer = awsx.apigateway.getRequestLambdaAuthorizer({
       mode: 'Active',
     },
   }),
+  headers: ['Authorization'],
 });
 
 let routes: Route[] = [{
