@@ -1,4 +1,3 @@
-import { promisify } from 'util';
 import * as Axios from 'axios';
 import * as jsonwebtoken from 'jsonwebtoken';
 import * as jwkToPem from 'jwk-to-pem';
@@ -68,8 +67,6 @@ const getPublicKeys = async (): Promise<MapOfKidToPublicKey> => {
   return cacheKeys;
 };
 
-const verifyPromised = promisify(jsonwebtoken.verify.bind(jsonwebtoken));
-
 const verifyToken = async (request: ClaimVerifyRequest): Promise<ClaimVerifyResult> => {
   if (!cognitoPoolId) {
     throw new Error('env var required for cognito pool');
@@ -89,7 +86,8 @@ const verifyToken = async (request: ClaimVerifyRequest): Promise<ClaimVerifyResu
     if (key === undefined) {
       throw new Error('claim made for unknown kid');
     }
-    const claim = await verifyPromised(token, key.pem) as Claim;
+
+    const claim = jsonwebtoken.verify(token, key.pem) as Claim;
     const currentSeconds = Math.floor((new Date()).valueOf() / 1000);
     if (currentSeconds > claim.exp || currentSeconds < claim.auth_time) {
       throw new Error('claim is expired or invalid');
