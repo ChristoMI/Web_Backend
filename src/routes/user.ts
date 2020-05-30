@@ -21,18 +21,31 @@ export class AnonymousUser {
 
 export type User = AnonymousUser | AuthorizedUser;
 
-function isAnonymous(event: apigateway.Request) {
-  return !event.requestContext.authorizer
-    || !event.requestContext.authorizer.claims
-    || !event.requestContext.authorizer.claims.sub;
+async function extractUserIfFromApiGatewayEvent(event: apigateway.Request): Promise<string | undefined> {
+  if (event.requestContext.authorizer
+    && event.requestContext.authorizer.claims
+    && event.requestContext.authorizer.claims.sub) {
+    return event.requestContext.authorizer.claims.sub;
+  }
+
+  // default (cognito authorizers) cannot handle authorized-or-anonymous logic
+  // so the workaround is to require no authorizers and chech the token manually
+  const authHeader = event.headers.Authorization;
+  if (authHeader) {
+    const token = authHeader.substr('Bearer '.length);
+    return extractUserIdFromToken(token);
+  }
+
+  return undefined;
 }
 
-export function getNonAdminUser(event: apigateway.Request) {
-  if (isAnonymous(event)) {
+export async function getNonAdminUser(event: apigateway.Request) {
+  const userId = await extractUserIfFromApiGatewayEvent(event);
+
+  if (!userId) {
     return new AnonymousUser();
   }
 
-  const userId = event.requestContext.authorizer!.claims.sub;
   return new AuthorizedUser(userId, false);
 }
 
@@ -62,22 +75,7 @@ export async function getUser(userId: string, dynamo: DynamoDB): Promise<User> {
 }
 
 export async function getCurrentUser(event: apigateway.Request, dynamo: DynamoDB): Promise<User> {
-  if (isAnonymous(event)) {
-    return new AnonymousUser();
-  }
-
-  let userId: string | undefined = event.requestContext.authorizer!.claims.sub;
-
-  // default (cognito authorizers) cannot handle authorized-or-anonymous logic
-  // so the workaround is to require no authorizers and chech the token manually
-  if (!userId) {
-    const authHeader = event.headers.Authorization;
-
-    if (authHeader) {
-      const token = authHeader.substr('Bearer '.length);
-      userId = await extractUserIdFromToken(token);
-    }
-  }
+  const userId = await extractUserIfFromApiGatewayEvent(event);
 
   if (!userId) {
     return new AnonymousUser();

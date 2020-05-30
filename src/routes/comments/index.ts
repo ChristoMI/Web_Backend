@@ -71,7 +71,7 @@ export function getCommentsByPropertyId() {
 
   const handler = async (event: awsx.apigateway.Request) => {
     const propertyId = event.pathParameters!.id;
-    const user = getNonAdminUser(event);
+    const user = await getNonAdminUser(event);
 
     const params = {
       TableName: 'comment',
@@ -112,7 +112,7 @@ export function createPropertyComment() {
   const analysisService = new AnalysisService(process.env.AnalysisServerUrl!);
 
   const handler = async (event: awsx.apigateway.Request) => {
-    const user = getNonAdminUser(event);
+    const user = await getNonAdminUser(event);
     const propertyId = event.pathParameters!.id;
     const body = parseBody(event);
 
