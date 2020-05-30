@@ -3,12 +3,14 @@ import { User } from './user';
 import { buildApiResponse } from '$src/apiGatewayUtilities';
 
 export function canSee(user: User, property: Property) {
-  if (user.isAdmin) {
-    return true;
-  }
+  if (user.type === 'Authorized') {
+    if (user.isAdmin) {
+      return true;
+    }
 
-  if (user.userId === property.authorId) {
-    return true;
+    if (user.userId === property.authorId) {
+      return true;
+    }
   }
 
   if (property.isConfirmed) {

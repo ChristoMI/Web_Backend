@@ -32,6 +32,7 @@ module.exports = {
     "no-unused-vars": "off",
     "no-unused-expressions": "off",
     "no-restricted-syntax": "off",
+    "max-classes-per-file": "off",
     "@typescript-eslint/no-unused-vars": ["error"],
     'camelcase': 'off',
     'arrow-parens': 'off',

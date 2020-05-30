@@ -124,7 +124,7 @@ export function createPropertyComment() {
       });
     }
 
-    if (!canSee(user, property)) return insuficientPermissionsResult();
+    if (!canSee(user, property) || user.type === 'Anonymous') return insuficientPermissionsResult();
 
     const mood = await analysisService.getCommentMood(body.text);
 

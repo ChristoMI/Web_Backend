@@ -397,7 +397,8 @@ export function propertyRate() {
       return buildNotFound();
     }
 
-    if (!canSee(user, search)) return insuficientPermissionsResult();
+    // Check for anonymous is required to access authorized user info
+    if (!canSee(user, search) || user.type === 'Anonymous') return insuficientPermissionsResult();
 
     const property: Property = {
       ...search,
