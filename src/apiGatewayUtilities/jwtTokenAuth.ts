@@ -99,8 +99,8 @@ const verifyToken = async (request: ClaimVerifyRequest): Promise<ClaimVerifyResu
     if (claim.iss !== cognitoIssuer()) {
       throw new Error('claim issuer is invalid');
     }
-    if (claim.token_use !== 'access') {
-      throw new Error('claim use is not access');
+    if (claim.token_use !== 'id') {
+      throw new Error('claim use is not id');
     }
 
     result = { userName: claim.username, clientId: claim.client_id, isValid: true };

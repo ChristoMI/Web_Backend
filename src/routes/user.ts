@@ -1,5 +1,6 @@
 import { DynamoDB } from 'aws-sdk';
 import { apigateway } from '@pulumi/awsx';
+import { extractUserIdFromToken } from '$src/apiGatewayUtilities/jwtTokenAuth';
 
 export class AuthorizedUser {
   public readonly userId: string;
@@ -65,7 +66,22 @@ export async function getCurrentUser(event: apigateway.Request, dynamo: DynamoDB
     return new AnonymousUser();
   }
 
-  const userId = event.requestContext.authorizer!.claims.sub;
+  let userId: string | undefined = event.requestContext.authorizer!.claims.sub;
+
+  // default (cognito authorizers) cannot handle authorized-or-anonymous logic
+  // so the workaround is to require no authorizers and chech the token manually
+  if (!userId) {
+    const authHeader = event.headers.Authorization;
+
+    if (authHeader) {
+      const token = authHeader.substr('Bearer '.length);
+      userId = await extractUserIdFromToken(token);
+    }
+  }
+
+  if (!userId) {
+    return new AnonymousUser();
+  }
 
   return getUser(userId, dynamo);
 }

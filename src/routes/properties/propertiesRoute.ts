@@ -7,11 +7,8 @@ import {
 } from '$src/apiGatewayUtilities';
 import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '../settings';
 import { PropertiesDynamoModel, Property, PropertyRating } from './propertiesModel';
-import {
-  getCurrentUser, AnonymousUser, getUser, User,
-} from '../user';
+import { getCurrentUser } from '../user';
 import { canSee, insuficientPermissionsResult } from '../propertyPermission';
-import { extractUserIdFromToken } from '$src/apiGatewayUtilities/jwtTokenAuth';
 
 export interface PropertyImageApiResponse {
   id: number,
@@ -364,18 +361,7 @@ export function propertiesGet() {
   }
 
   const handler = async (event: awsx.apigateway.Request) => {
-    const auth = event.headers.Authorization;
-
-    // default Authorizers cannot handle authorized-or-anonymous logic
-    let user: User = new AnonymousUser();
-    if (auth) {
-      const token = auth.substr('Bearer '.length);
-      const userId = await extractUserIdFromToken(token);
-
-      if (userId) {
-        user = await getUser(userId, dynamo);
-      }
-    }
+    const user = await getCurrentUser(event, dynamo);
 
     const properties = await dbModel.findAll();
 
