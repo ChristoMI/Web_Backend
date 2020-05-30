@@ -2,6 +2,7 @@ import { promisify } from 'util';
 import * as Axios from 'axios';
 import * as jsonwebtoken from 'jsonwebtoken';
 import * as jwkToPem from 'jwk-to-pem';
+import * as AWS from 'aws-sdk';
 
 export interface ClaimVerifyRequest {
   readonly token?: string;
@@ -49,7 +50,7 @@ interface Claim {
 }
 
 const cognitoPoolId = process.env.COGNITO_POOL_ID || '';
-const cognitoIssuer = `https://cognito-idp.us-east-1.amazonaws.com/${cognitoPoolId}`;
+const cognitoIssuer = `https://cognito-idp.${AWS.config.region!}.amazonaws.com/${cognitoPoolId}`;
 
 let cacheKeys: MapOfKidToPublicKey | undefined;
 const getPublicKeys = async (): Promise<MapOfKidToPublicKey> => {
