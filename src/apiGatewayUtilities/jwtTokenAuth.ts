@@ -46,7 +46,6 @@ interface Claim {
   exp: number;
   sub: string;
   username: string;
-  client_id: string;
 }
 
 

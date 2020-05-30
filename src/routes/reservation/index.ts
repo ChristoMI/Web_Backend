@@ -9,6 +9,8 @@ import {
 import { query } from '$src/dynamodb/utils';
 import { createDynamo } from '$src/initAWS';
 import { PropertiesDynamoModel } from '../properties/propertiesModel';
+import { getCurrentUser } from '../user';
+import { canSee, insuficientPermissionsResult } from '../propertyPermission';
 
 function toResponse(entry: DynamoDB.AttributeMap) {
   return {
@@ -132,6 +134,7 @@ export function getAvailableCountReservations() {
       });
     }
 
+    const customer = await getCurrentUser(event, dynamo);
     const property = await model.findById(propertyId);
 
     if (!property) {
@@ -139,6 +142,8 @@ export function getAvailableCountReservations() {
         message: 'Property not found',
       });
     }
+
+    if (!canSee(customer, property)) return insuficientPermissionsResult();
 
     const lockedRoomsCount = await calculateLockedRoomsFromDynamo(property.id, beginDate, endDate, dynamo);
     const availableRoomsCount = property.totalRoomsNumber - lockedRoomsCount;
@@ -155,7 +160,7 @@ export function createReservation() {
   const model = new PropertiesDynamoModel(dynamo);
 
   const handler = async (event: awsx.apigateway.Request) => {
-    const customerId = getUserId(event);
+    const customer = await getCurrentUser(event, dynamo);
 
     const body = parseBody(event);
 
@@ -172,6 +177,8 @@ export function createReservation() {
       });
     }
 
+    if (!canSee(customer, property) || customer.type === 'Anonymous') return insuficientPermissionsResult();
+
     const lockedRoomsCount = await calculateLockedRoomsFromDynamo(property.id, beginDate, endDate, dynamo);
     const availableRoomsCount = property.totalRoomsNumber - lockedRoomsCount;
 
@@ -183,7 +190,7 @@ export function createReservation() {
 
     const reservation = marshall({
       id: uuidv4(),
-      customerId,
+      customerId: customer.userId,
       propertyId,
       bookedRoomsNumber,
       beginDate: String(beginDate),

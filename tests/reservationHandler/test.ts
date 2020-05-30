@@ -8,8 +8,14 @@ import { STATIC_BUCKET_ENV_KEY, STATIC_DOMAIN_ENV_KEY } from '$src/routes/settin
 
 import * as reservationRoutes from '$src/routes/reservation';
 import * as propertyRoutes from '$src/routes/properties/propertiesRoute';
+import { assertOkResult } from '$tests/assertHelpers';
+import { createRequestFromBlueprint } from '$tests/testApiGatewayRequest';
 
 import stubs = require('$tests/profileHandler/stubs');
+
+function confirmProperty(propertyId: String) {
+  return propertyRoutes.propertyConfirm()(createRequestFromBlueprint({}, { id: propertyId }));
+}
 
 describe('reservation', () => {
   const customerId = stubs.customer.id;
@@ -60,6 +66,7 @@ describe('reservation', () => {
     }));
 
     const property = JSON.parse(propertyResult.body);
+    await confirmProperty(property.id);
 
     const requestCreate = stubs.createRequest({
       sub: customerId,
@@ -84,6 +91,7 @@ describe('reservation', () => {
     });
 
     const result = await reservationRoutes.getAvailableCountReservations()(request);
+    assertOkResult(result);
 
     const body = JSON.parse(result.body);
 
@@ -103,6 +111,7 @@ describe('reservation', () => {
     }));
 
     const property = JSON.parse(propertyResult.body);
+    await confirmProperty(property.id);
 
     const request = stubs.createRequest({
       sub: customerId,
@@ -131,6 +140,7 @@ describe('reservation', () => {
     }));
 
     const property = JSON.parse(propertyResult.body);
+    await confirmProperty(property.id);
 
     const requestCreate = stubs.createRequest({
       sub: customerId,
