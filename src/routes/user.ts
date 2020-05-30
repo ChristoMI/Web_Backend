@@ -35,13 +35,7 @@ export function getNonAdminUser(event: apigateway.Request) {
   return new AuthorizedUser(userId, false);
 }
 
-export async function getCurrentUser(event: apigateway.Request, dynamo: DynamoDB): Promise<User> {
-  if (isAnonymous(event)) {
-    return new AnonymousUser();
-  }
-
-  const userId = event.requestContext.authorizer!.claims.sub;
-
+export async function getUser(userId: string, dynamo: DynamoDB): Promise<User> {
   let user = await dynamo.getItem({
     TableName: 'host',
     Key: {
@@ -64,4 +58,14 @@ export async function getCurrentUser(event: apigateway.Request, dynamo: DynamoDB
 
   const isAdmin = user.Item && user.Item.isAdmin && user.Item.isAdmin.BOOL;
   return new AuthorizedUser(userId, isAdmin || false);
+}
+
+export async function getCurrentUser(event: apigateway.Request, dynamo: DynamoDB): Promise<User> {
+  if (isAnonymous(event)) {
+    return new AnonymousUser();
+  }
+
+  const userId = event.requestContext.authorizer!.claims.sub;
+
+  return getUser(userId, dynamo);
 }

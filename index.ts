@@ -151,36 +151,6 @@ const cognitoAuthorizerHosts = awsx.apigateway.getCognitoAuthorizer({
   providerARNs: [hostsUserPool],
 });
 
-const anonymousAuthorizer = awsx.apigateway.getRequestLambdaAuthorizer({
-  authorizerName: 'AllowAnonymous',
-  handler: new aws.lambda.CallbackFunction('AllowANonymousAuthorizer', {
-    callback: (evnt: awsx.apigateway.AuthorizerEvent) => {
-      const authResponse: any = {};
-
-      authResponse.principalId = 'Anonymous';
-
-      const policyDocument: any = {};
-      policyDocument.Version = '2012-10-17';
-      policyDocument.Statement = [];
-      const statementOne: any = {};
-      statementOne.Action = 'execute-api:Invoke';
-      statementOne.Effect = 'Allow';
-      statementOne.Resource = evnt.methodArn;
-      policyDocument.Statement[0] = statementOne;
-      authResponse.policyDocument = policyDocument;
-
-      // Optional output with custom properties of the String, Number or Boolean type.
-      authResponse.context = {};
-      return authResponse;
-    },
-    reservedConcurrentExecutions: 1,
-    tracingConfig: {
-      mode: 'Active',
-    },
-  }),
-  headers: ['Authorization', 'Host', ':authority'],
-});
-
 let routes: Route[] = [{
   path: '/test/{id}',
   method: 'GET',
@@ -304,10 +274,9 @@ let routes: Route[] = [{
     tracingConfig: {
       mode: 'Active',
     },
-    environment,
+    environment: { variables: { ...environment.variables, COGNITO_POOL_ID: hostsUserPool.arn } },
     memorySize: defaultMemorySize,
   }),
-  authorizers: [cognitoAuthorizerHosts, anonymousAuthorizer],
 },
 {
   path: '/properties/{id}',
