@@ -9,7 +9,7 @@ export interface ClaimVerifyRequest {
 
 export interface ClaimVerifyResult {
   readonly userName: string;
-  readonly clientId: string;
+  readonly sub: string;
   readonly isValid: boolean;
   readonly error?: any;
 }
@@ -44,6 +44,7 @@ interface Claim {
   auth_time: number;
   iss: string;
   exp: number;
+  sub: string;
   username: string;
   client_id: string;
 }
@@ -103,12 +104,12 @@ const verifyToken = async (request: ClaimVerifyRequest): Promise<ClaimVerifyResu
       throw new Error('claim use is not id');
     }
 
-    result = { userName: claim.username, clientId: claim.client_id, isValid: true };
+    result = { userName: claim.username, sub: claim.sub, isValid: true };
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error(`FAILED TOKEN VALIDATION: ${error}`);
     result = {
-      userName: '', clientId: '', error, isValid: false,
+      userName: '', sub: '', error, isValid: false,
     };
   }
   return result;
@@ -119,7 +120,7 @@ export async function extractUserIdFromToken(token: string) {
   const verified = await verifyToken({ token });
 
   if (verified.isValid) {
-    return verified.clientId;
+    return verified.sub;
   }
 
   return undefined;
