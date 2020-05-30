@@ -178,7 +178,7 @@ const anonymousAuthorizer = awsx.apigateway.getRequestLambdaAuthorizer({
       mode: 'Active',
     },
   }),
-  headers: ['Authorization', 'Host'],
+  headers: ['Authorization', 'Host', ':authority'],
 });
 
 let routes: Route[] = [{
