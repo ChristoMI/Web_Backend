@@ -105,6 +105,8 @@ const verifyToken = async (request: ClaimVerifyRequest): Promise<ClaimVerifyResu
 
     result = { userName: claim.username, clientId: claim.client_id, isValid: true };
   } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(`FAILED TOKEN VALIDATION: ${error}`);
     result = {
       userName: '', clientId: '', error, isValid: false,
     };
