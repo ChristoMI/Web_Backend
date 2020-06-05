@@ -3,6 +3,11 @@ import { User } from './user';
 import { buildApiResponse } from '$src/apiGatewayUtilities';
 
 export function canSee(user: User, property: Property) {
+  // Due to me (KS) being flabbergasted by FE
+  // Remove return when FE supports stuff (never?)
+  return true;
+
+  /* eslint-disable no-unreachable */
   if (user.type === 'Authorized') {
     if (user.isAdmin) {
       return true;
