@@ -2,13 +2,14 @@ import { Property } from './properties/propertiesModel';
 import { User } from './user';
 import { buildApiResponse } from '$src/apiGatewayUtilities';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function canSee(user: User, property: Property) {
   // Due to me (KS) being flabbergasted by FE
   // Remove return when FE supports stuff (never?)
   return true;
 
-  /* eslint-disable no-unreachable */
-  if (user.type === 'Authorized') {
+  // eslint-disable-next-line spaced-comment
+  /*if (user.type === 'Authorized') {
     if (user.isAdmin) {
       return true;
     }
@@ -22,7 +23,7 @@ export function canSee(user: User, property: Property) {
     return true;
   }
 
-  return false;
+  return false;*/
 }
 
 export function insuficientPermissionsResult() {
