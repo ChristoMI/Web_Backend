@@ -1,6 +1,9 @@
 # Web_Backend
 The repository contains the code of backend implementations that correspond to functional req-s for the "Bug Booking" project
 
+# Code inspection
+Try starting with https://github.com/ChristoMI/Web_Backend/blob/master/src/routes/properties/propertiesRoute.ts file - the API for property management (CRUD)
+
 # Automation
 Integration tests run on both PRs and commits to master
 
