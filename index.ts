@@ -31,7 +31,7 @@ const googleClientSecret = stackConfig.require('googleClientSecret');
 const variables = {
   [STATIC_BUCKET_ENV_KEY]: staticBucket,
   [STATIC_DOMAIN_ENV_KEY]: staticDomain,
-  AnalysisServerUrl: 'http://54.214.143.113:80',
+  AnalysisServerUrl: 'http://109.207.196.238:5555',
 };
 
 const environment = {
